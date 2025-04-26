@@ -172,20 +172,26 @@
     });
   }
 
-  function resetGame() {
-    if (confirm("Bạn có chắc muốn reset?")) {
-      db.ref("currentQuestion").remove();
-      db.ref("answers").remove();
-      clearInterval(countdownInt);
-      countdownEl.innerText = "—";
-      currentQEl.innerText = "—";
-      currentQ2El.innerText = "—";
-      questionImage.src = "";
-      resultsBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu...</td></tr>`;
-      if (barChart) barChart.destroy();
-      document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
-    }
+function resetGame() {
+  if (confirm("Bạn có chắc muốn reset?")) {
+    // Xóa dữ liệu câu hỏi hiện tại
+    db.ref("currentQuestion").remove();
+    // Xóa tất cả dữ liệu đáp án của học sinh
+    db.ref("answers").remove();
+    // Đặt lại các thông tin hiển thị
+    clearInterval(countdownInt);
+    countdownEl.innerText = "—";
+    currentQEl.innerText = "—";
+    currentQ2El.innerText = "—";
+    questionImage.src = "";
+    resultsBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu...</td></tr>`;
+    // Xóa biểu đồ điểm
+    if (barChart) barChart.destroy();
+    // Gỡ bỏ lựa chọn câu hỏi đã chọn
+    document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
   }
+}
+
 </script>
 
 </body>
