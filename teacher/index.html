@@ -30,22 +30,26 @@
     #questionList button.active {
       background-color: #e74c3c;
     }
+    #questionList button.selected {
+      background-color: #e74c3c;
+    }
     #mainArea {
       flex-grow: 1;
-    }
-    img {
-      width: 400px;
-      max-width: 100%;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative; /* thêm dòng này để reset button dễ căn */
     }
     #controlPanel {
       margin-bottom: 20px;
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     #controlPanel button {
       padding: 10px 20px;
-      margin-right: 10px;
       background-color: #e67e22;
       color: white;
       border: none;
@@ -53,25 +57,63 @@
       cursor: pointer;
       font-size: 16px;
     }
+    #currentQuestionInfo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+    }
     #countdown {
       font-size: 24px;
       color: red;
       margin: 10px 0;
     }
+    #questionImage {
+      width: 600px;
+      max-width: 90%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: block;
+    }
+    #resultArea {
+      width: 100%;
+      padding-bottom: 50px; /* chừa khoảng trống dưới để không đè lên nút reset */
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      font-size: 14px;
     }
     table, th, td {
       border: 1px solid #ccc;
     }
     th, td {
-      padding: 10px;
+      padding: 8px;
       text-align: center;
     }
     th {
       background-color: #f7f7f7;
+    }
+    #resetButtonContainer {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      padding: 10px;
+    }
+    #resetButtonContainer button {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #resetButtonContainer button:hover {
+      background-color: #c0392b;
     }
   </style>
 </head>
@@ -83,7 +125,10 @@
 
 <div id="mainArea">
   <div id="controlPanel">
-    <button onclick="resetSystem()">🔄 Reset Hệ Thống</button>
+    <button onclick="openExplain(1)">📖 Giải thích 1</button>
+    <button onclick="openExplain(2)">📖 Giải thích 2</button>
+    <button onclick="openExplain(3)">📖 Giải thích 3</button>
+    <button onclick="openExplain(4)">📖 Giải thích 4</button>
   </div>
 
   <div id="currentQuestionInfo">
@@ -96,13 +141,17 @@
     <table>
       <thead>
         <tr>
-         <th>👤 Nhóm </th>
+          <th>👤 Nhóm</th>
           <th>🅰️ Phương án</th>
           <th>🏆 Điểm</th>
         </tr>
       </thead>
       <tbody id="answerList"></tbody>
     </table>
+  </div>
+
+  <div id="resetButtonContainer">
+    <button onclick="resetSystem()">🔄 Reset</button>
   </div>
 </div>
 
@@ -126,7 +175,13 @@
   let countdownInt = null;
   let currentQuestion = null;
 
-  // Tạo danh sách câu hỏi
+  const correctAnswers = {
+    cau1: "B", cau2: "C", cau3: "C", cau4: "D", cau5: "B",
+    cau6: "D", cau7: "A", cau8: "D", cau9: "A", cau10: "D"
+  };
+
+  let studentAnswers = {};
+
   for (let i = 1; i <= 10; i++) {
     const btn = document.createElement("button");
     btn.textContent = "Câu " + i;
@@ -146,6 +201,9 @@
     document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
+    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+
     startCountdown(30);
   }
 
@@ -158,6 +216,7 @@
     countdownEl.innerText = "⏱️ Còn lại: —";
     answerListEl.innerHTML = "";
     document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+    studentAnswers = {};
     alert("Đã reset toàn bộ hệ thống!");
   }
 
@@ -175,22 +234,51 @@
     }, 1000);
   }
 
+  function saveAnswerForStudent(studentName, answer) {
+    if (!studentAnswers[studentName]) {
+      studentAnswers[studentName] = {};
+    }
+    studentAnswers[studentName]["cau" + currentQuestion] = answer;
+    db.ref("answers/" + studentName).set(studentAnswers[studentName]);
+  }
+
   function loadAnswers() {
     if (!currentQuestion) return;
+
     db.ref("answers").once("value", snap => {
       const data = snap.val();
       answerListEl.innerHTML = "";
+
       if (data) {
         for (const name in data) {
           const answers = data[name];
-          const answer = answers["cau" + currentQuestion] || "Không chọn";
-          const score = (["A", "B", "C", "D"].includes(answer)) ? 10 : 0; // tính điểm 10 nếu chọn hợp lệ
+          const ansKey = "cau" + currentQuestion;
+          let studentAnswer = answers[ansKey] || "";
+
+          studentAnswer = studentAnswer.toString().trim().toUpperCase();
+          if (!["A", "B", "C", "D"].includes(studentAnswer)) {
+            studentAnswer = "Không chọn";
+          }
+
+          const correctAnswer = correctAnswers[ansKey];
+          const score = (studentAnswer === correctAnswer) ? 3 : 0;
+
           const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${name}</td><td>${answer}</td><td>${score}</td>`;
+          tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
           answerListEl.appendChild(tr);
         }
       }
     });
+  }
+
+  function openExplain(number) {
+    const links = {
+      1: 'https://example.com/giai-thich-1',
+      2: 'https://example.com/giai-thich-2',
+      3: 'https://example.com/giai-thich-3',
+      4: 'https://example.com/giai-thich-4'
+    };
+    window.open(links[number], '_blank');
   }
 </script>
 
