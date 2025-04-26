@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Học sinh chọn đáp án</title>
+</head>
+<body>
+  <h2>Chọn phương án của bạn:</h2>
+  <button onclick="submitAnswer('A')">A</button>
+  <button onclick="submitAnswer('B')">B</button>
+  <button onclick="submitAnswer('C')">C</button>
+  <button onclick="submitAnswer('D')">D</button>
+
+  <p id="status"></p>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+    // THAY cấu hình này bằng thông tin Firebase của bạn
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const studentId = prompt("Nhập tên hoặc mã học sinh:");
+
+    function submitAnswer(answer) {
+      db.ref("answers/" + studentId).set({
+        answer: answer,
+        timestamp: Date.now()
+      });
+      document.getElementById("status").innerText = "Bạn đã chọn đáp án: " + answer;
+    }
+  </script>
+</body>
+</html>

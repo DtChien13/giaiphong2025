@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Giao viên xem kết quả</title>
+</head>
+<body>
+  <h2>Kết quả của học sinh:</h2>
+  <ul id="results"></ul>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+    // THAY cấu hình này bằng thông tin Firebase của bạn
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const resultsList = document.getElementById("results");
+
+    db.ref("answers").on("value", snapshot => {
+      const data = snapshot.val();
+      resultsList.innerHTML = "";
+      for (let student in data) {
+        const item = document.createElement("li");
+        item.textContent = `${student}: ${data[student].answer}`;
+        resultsList.appendChild(item);
+      }
+    });
+  </script>
+</body>
+</html>
