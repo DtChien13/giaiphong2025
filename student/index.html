@@ -99,7 +99,8 @@
           imageEl.src = `./images/C${padded}.png`;
           resetButtonSelection();
           enableButtons();
-          startCountdown(30);
+          startCountdown(qn === 1 ? 90 : 30);
+
         }
       }
     });
