@@ -114,26 +114,34 @@
   const buttons = document.querySelectorAll("#options button");
   const studentDisplay = document.getElementById("studentDisplay");
   const answeredQuestionsEl = document.getElementById("answeredQuestions");
+
   let currentQuestion = null;
   let countdownInt = null;
   let answerAllowed = false;
-  let allAnswers = {};       // Lưu các câu đã xác nhận (sau khi hết giờ)
-  let selectedAnswers = {};  // Lưu đáp án học sinh chọn tạm thời
+  let allAnswers = {};       // Đáp án đã xác nhận
+  let selectedAnswers = {};  // Đáp án tạm thời
 
-  // Khi giáo viên gửi câu hỏi mới
+  // Lắng nghe khi giáo viên đổi câu hỏi
   db.ref("currentQuestion").on("value", snap => {
     const val = snap.val();
+
     if (!val) {
+      // Reset khi giáo viên reset
+      clearInterval(countdownInt);
       imageEl.src = "";
       currentQuestion = null;
       countdownEl.innerText = "⏱️ Còn lại: —";
       disableButtons();
+      resetButtonSelection();
       return;
     }
+
+    // Nếu có câu hỏi mới
     const qn = val.number;
     currentQuestion = qn;
     const padded = String(qn).padStart(2, '0');
-    imageEl.src = `./images/C${padded}.png`; // Đường dẫn ảnh
+    imageEl.src = `./images/C${padded}.png`;
+
     startCountdown(30);
     resetButtonSelection();
   });
@@ -145,6 +153,7 @@
     countdownEl.innerText = `⏱️ ${t}s`;
     answerAllowed = true;
     enableButtons();
+
     countdownInt = setInterval(() => {
       t--;
       countdownEl.innerText = `⏱️ ${t}s`;
@@ -158,18 +167,7 @@
     }, 1000);
   }
 
-  // Khi học sinh bấm chọn đáp án
-  buttons.forEach(b => {
-    b.onclick = () => {
-      if (!answerAllowed || !currentQuestion) return;
-      const ans = b.innerText;
-      selectedAnswers["cau" + currentQuestion] = ans;
-      buttons.forEach(x => x.classList.remove("selected"));
-      b.classList.add("selected");
-    };
-  });
-
-  // Khi hết giờ -> lưu đáp án đã chọn
+  // Lưu đáp án sau khi hết giờ
   function saveAnswerAfterTimeout() {
     const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
     if (!name) {
@@ -181,24 +179,32 @@
     const key = "cau" + currentQuestion;
     const ans = selectedAnswers[key] || "Không chọn";
 
-    // Lưu vào object tổng
     allAnswers[key] = ans;
 
-    // Hiển thị danh sách
+    // Hiển thị ra danh sách đã trả lời
     const listItem = document.createElement("li");
     listItem.textContent = `Câu ${currentQuestion}: ${ans}`;
     answeredQuestionsEl.appendChild(listItem);
 
-    // Gửi Firebase
+    // Gửi lên Firebase
     db.ref("answers/" + name).set(allAnswers);
   }
 
-  // Hàm reset chọn đáp án
+  // Khi chọn đáp án
+  buttons.forEach(b => {
+    b.onclick = () => {
+      if (!answerAllowed || !currentQuestion) return;
+      const ans = b.innerText;
+      selectedAnswers["cau" + currentQuestion] = ans;
+      resetButtonSelection();
+      b.classList.add("selected");
+    };
+  });
+
   function resetButtonSelection() {
     buttons.forEach(b => b.classList.remove("selected"));
   }
 
-  // Disable nút
   function disableButtons() {
     buttons.forEach(b => {
       b.classList.add("disabled");
@@ -206,7 +212,6 @@
     });
   }
 
-  // Enable nút
   function enableButtons() {
     buttons.forEach(b => {
       b.classList.remove("disabled");
@@ -214,27 +219,26 @@
     });
   }
 
-  // Khi học sinh nhập tên bắt đầu
+  // Khi học sinh nhập tên
   function startQuiz() {
     const nameInput = document.getElementById("studentName").value.trim();
     if (nameInput.length < 1) {
       alert("Vui lòng nhập tên!");
       return;
     }
-    // Lưu tên vào localStorage
     localStorage.setItem("name", nameInput);
     studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + nameInput;
     document.getElementById("loginArea").style.display = "none";
     document.getElementById("quizArea").style.display = "block";
   }
 
-  // Tự động đăng nhập nếu đã lưu tên
+  // Tự động đăng nhập lại nếu đã có tên
   window.onload = function() {
     const savedName = localStorage.getItem("name");
     if (savedName) {
       document.getElementById("loginArea").style.display = "none";
       document.getElementById("quizArea").style.display = "block";
-      studentDisplay.innerText = "👨‍🎓 Học sinh: " + savedName;
+      studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + savedName;
     }
   }
 </script>
