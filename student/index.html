@@ -65,15 +65,30 @@
       font-size: 18px;
       margin-bottom: 5px;
     }
+    #studentDisplay {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    #countdown-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    #countdown-container span {
+      margin: 0 10px;
+    }
   </style>
 </head>
 <body>
 
 <h2>🎯 Hệ thống trả lời câu hỏi</h2>
+ <h1>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h1>
 
 <!-- Phần nhập tên -->
 <div id="loginArea">
-  <h3>Nhập tên nhóm của bạn:</h3>
+  <h3>Nhập tên học sinh của bạn:</h3>
   <input type="text" id="studentName" placeholder="Nhập tên..." />
   <button onclick="startQuiz()">Bắt đầu</button>
 </div>
@@ -81,7 +96,11 @@
 <!-- Phần hiển thị câu hỏi và đáp án -->
 <div id="quizArea" style="display:none;">
   <div id="studentDisplay"></div>
-  <div id="countdown">⏱️ Còn lại: —</div>
+  <div id="countdown-container">
+    <span id="currentQ">Câu: —</span>
+    ⏱️ <span id="countdown">Còn lại: —</span>
+  </div>
+
   <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
   <div id="options">
     <button>A</button>
@@ -126,7 +145,7 @@
     if (!val) {
       imageEl.src = "";
       currentQuestion = null;
-      countdownEl.innerText = "⏱️ Còn lại: —";
+   //   countdownEl.innerText = "⏱️ Còn lại: —";
       disableButtons();
       return;
     }
@@ -143,6 +162,7 @@
     clearInterval(countdownInt);
     let t = sec;
     countdownEl.innerText = `⏱️ ${t}s`;
+    document.getElementById("currentQ").innerText = `Câu: ${currentQuestion}`;
     answerAllowed = true;
     enableButtons();
     countdownInt = setInterval(() => {
@@ -157,7 +177,7 @@
       }
     }, 1000);
   }
-
+ 
   // Khi học sinh bấm chọn đáp án
   buttons.forEach(b => {
     b.onclick = () => {
@@ -168,7 +188,6 @@
       b.classList.add("selected");
     };
   });
-
   // Khi hết giờ -> lưu đáp án đã chọn
   function saveAnswerAfterTimeout() {
     const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
@@ -221,9 +240,8 @@
       alert("Vui lòng nhập tên!");
       return;
     }
-    // Lưu tên vào localStorage
     localStorage.setItem("name", nameInput);
-    studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + nameInput;
+    studentDisplay.innerText = "👨‍🎓 Học sinh: " + nameInput;
     document.getElementById("loginArea").style.display = "none";
     document.getElementById("quizArea").style.display = "block";
   }
