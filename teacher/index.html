@@ -6,7 +6,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    /* --- Giữ nguyên style của bạn ở trên --- */
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
@@ -28,7 +27,10 @@
       font-size: 16px;
       transition: background 0.3s;
     }
-    #questionList button.active, #questionList button.selected {
+    #questionList button.active {
+      background-color: #e74c3c;
+    }
+    #questionList button.selected {
       background-color: #e74c3c;
     }
     #mainArea {
@@ -66,19 +68,13 @@
       color: red;
       margin: 10px 0;
     }
-    #questionImage {
+    .mediaDisplay {
       width: 600px;
       max-width: 90%;
       border: 2px solid #ccc;
       border-radius: 10px;
-      margin-bottom: 10px;
-      display: block;
-    }
-    #questionVideo {
-      width: 500px;
-      max-width: 90%;
       margin-bottom: 20px;
-      border-radius: 10px;
+      display: block;
     }
     #resultArea {
       width: 100%;
@@ -138,7 +134,6 @@
     }
   </style>
 </head>
-
 <body>
 
 <div id="questionList">
@@ -155,13 +150,7 @@
 
   <div id="currentQuestionInfo">
     <div id="countdown">⏱️ Còn lại: —</div>
-    <img id="questionImage" src="" alt="Hình câu hỏi">
-
-    <!-- Thêm thẻ VIDEO ở đây -->
-    <video id="questionVideo" controls autoplay muted playsinline style="display:none;">
-      <source id="videoSource" src="" type="video/mp4">
-      Trình duyệt của bạn không hỗ trợ video.
-    </video>
+    <img id="questionImage" class="mediaDisplay" src="" alt="Hình câu hỏi">
   </div>
 
   <div id="resultArea">
@@ -203,21 +192,24 @@
 
   const questionListEl = document.getElementById("questionList");
   const questionImage = document.getElementById("questionImage");
-  const questionVideo = document.getElementById("questionVideo");
-  const videoSource = document.getElementById("videoSource");
   const countdownEl = document.getElementById("countdown");
   const answerListEl = document.getElementById("answerList");
   const team1El = document.getElementById("team1");
   const team2El = document.getElementById("team2");
-
   let countdownInt = null;
   let currentQuestion = null;
+
   const correctAnswers = {
     cau1: "B", cau2: "C", cau3: "C", cau4: "D", cau5: "B",
     cau6: "D", cau7: "A", cau8: "D", cau9: "A", cau10: "D"
   };
+
   let studentAnswers = {};
   let teamScores = { team1: 0, team2: 0 };
+
+  const questionsWithVideo = {
+    10: "videos/c10_intro.mp4"  // câu 10 có video trước
+  };
 
   for (let i = 1; i <= 10; i++) {
     const btn = document.createElement("button");
@@ -231,21 +223,39 @@
     currentQuestion = qn;
     const padded = String(qn).padStart(2, '0');
 
-    // Load hình ảnh
-    questionImage.src = `./images/C${padded}.png`;
+    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
 
-    // Load video
-    videoSource.src = `./videos/C${padded}.mp4`;
-    questionVideo.load();
-    questionVideo.style.display = "block";
-
-    db.ref("currentQuestion").set({ number: qn });
     answerListEl.innerHTML = "";
+    db.ref("currentQuestion").set({ number: qn });
 
-    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active", "selected"));
-    btn.classList.add("active", "selected");
+    if (questionsWithVideo[qn]) {
+      showVideoThenImage(questionsWithVideo[qn], `./images/C${padded}.png`);
+    } else {
+      questionImage.src = `./images/C${padded}.png`;
+      questionImage.style.display = "block";
+      startCountdown(30);
+    }
+  }
 
-    startCountdown(30);
+  function showVideoThenImage(videoSrc, imgSrc) {
+    const video = document.createElement("video");
+    video.src = videoSrc;
+    video.controls = true;
+    video.autoplay = true;
+    video.className = "mediaDisplay";
+
+    questionImage.style.display = "none"; // Ẩn hình câu hỏi
+    questionImage.parentNode.insertBefore(video, questionImage);
+
+    video.addEventListener("ended", () => {
+      video.remove();
+      questionImage.style.display = "block";
+      questionImage.src = imgSrc;
+      startCountdown(30);
+    });
   }
 
   function resetSystem() {
@@ -254,8 +264,6 @@
     db.ref("answers").remove();
     db.ref("resetSignal").set(Date.now());
     questionImage.src = "";
-    videoSource.src = "";
-    questionVideo.style.display = "none";
     countdownEl.innerText = "⏱️ Còn lại: —";
     answerListEl.innerHTML = "";
     document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
@@ -290,6 +298,7 @@
 
   function loadAnswers() {
     if (!currentQuestion) return;
+
     db.ref("answers").once("value", snap => {
       const data = snap.val();
       answerListEl.innerHTML = "";
@@ -299,6 +308,7 @@
           const answers = data[name];
           const ansKey = "cau" + currentQuestion;
           let studentAnswer = answers[ansKey] || "";
+
           studentAnswer = studentAnswer.toString().trim().toUpperCase();
           if (!["A", "B", "C", "D"].includes(studentAnswer)) {
             studentAnswer = "Không chọn";
