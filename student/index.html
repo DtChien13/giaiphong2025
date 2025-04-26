@@ -8,13 +8,21 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       margin: 20px;
     }
-    img {
-      max-width: 90%;
+    h2 {
+      text-align: center;
+    }
+    #mainContent {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+      align-items: start;
+    }
+    #questionImage {
+      max-width: 400px;
       height: auto;
-      margin-bottom: 20px;
       border: 2px solid #ccc;
       border-radius: 10px;
     }
@@ -41,6 +49,7 @@
       margin-bottom: 20px;
     }
     #loginArea {
+      text-align: center;
       margin-bottom: 20px;
     }
     #loginArea input {
@@ -72,17 +81,19 @@
 <!-- Phần hiển thị câu hỏi và đáp án -->
 <div id="quizArea" style="display:none;">
   <div id="countdown">⏱️ Còn lại: —</div>
-  <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
-  <div id="options">
-    <button>A</button>
-    <button>B</button>
-    <button>C</button>
-    <button>D</button>
+  <div id="mainContent">
+    <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
+    <div id="options">
+      <button>A</button>
+      <button>B</button>
+      <button>C</button>
+      <button>D</button>
+    </div>
   </div>
 </div>
 
 <script>
-  // Cấu hình Firebase
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
     authDomain: "giaiphong2025-697c5.firebaseapp.com",
@@ -95,7 +106,6 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Các phần tử giao diện
   const imageEl = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
   const buttons = document.querySelectorAll("#options button");
@@ -103,7 +113,6 @@
   let countdownInt = null;
   let answerAllowed = false;
 
-  // Khi giáo viên gửi câu hỏi
   db.ref("currentQuestion").on("value", snap => {
     const val = snap.val();
     if (!val) {
@@ -115,11 +124,10 @@
     }
     const qn = val.number;
     currentQuestion = qn;
-    imageEl.src = `./c${qn}.png`; // Đường dẫn ảnh theo số câu
-    startCountdown(30); // Bắt đầu đếm ngược
+    imageEl.src = `./c${qn}.png`;
+    startCountdown(30);
   });
 
-  // Hàm đếm ngược
   function startCountdown(sec) {
     clearInterval(countdownInt);
     let t = sec;
@@ -138,7 +146,6 @@
     }, 1000);
   }
 
-  // Khi học sinh bấm chọn đáp án
   buttons.forEach(b => {
     b.onclick = () => {
       if (!answerAllowed || !currentQuestion) return;
@@ -146,7 +153,11 @@
       const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
       if (name) {
         localStorage.setItem("name", name);
-        db.ref("answers/" + name + "/cau" + currentQuestion).set(ans);
+        // Ghi lại mọi lần trả lời (ghi đè nếu trùng câu)
+        db.ref(`answers/${name}/cau${currentQuestion}`).set({
+          answer: ans,
+          timestamp: new Date().toISOString()
+        });
         buttons.forEach(x => x.classList.remove("selected"));
         b.classList.add("selected");
       } else {
@@ -155,7 +166,6 @@
     };
   });
 
-  // Hàm vô hiệu hóa các nút
   function disableButtons() {
     buttons.forEach(b => {
       b.classList.add("disabled");
@@ -163,7 +173,6 @@
     });
   }
 
-  // Hàm kích hoạt các nút
   function enableButtons() {
     buttons.forEach(b => {
       b.classList.remove("disabled");
@@ -171,7 +180,6 @@
     });
   }
 
-  // Hàm bắt đầu câu hỏi khi học sinh nhập tên
   function startQuiz() {
     const nameInput = document.getElementById("studentName").value.trim();
     if (nameInput.length < 1) {
@@ -186,4 +194,3 @@
 
 </body>
 </html>
-
