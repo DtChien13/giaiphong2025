@@ -75,6 +75,12 @@
     th {
       background-color: #f2f2f2;
     }
+    .correct {
+      background-color: #c8e6c9;
+    }
+    .incorrect {
+      background-color: #ffccbc;
+    }
   </style>
 </head>
 <body>
@@ -149,79 +155,4 @@
       buttons.forEach(button => {
         button.classList.remove("selected"); // Xóa lớp "selected" của tất cả nút
       });
-      document.getElementById(`question${number}`).classList.add("selected"); // Thêm lớp "selected" vào nút đã chọn
-    }
-  });
-
-  // Hàm chọn câu hỏi cho giáo viên
-  function selectQuestion(number) {
-    db.ref("currentQuestion").set({
-      number: number
-    });
-  }
-
-  // Hàm reset toàn bộ dữ liệu
-  function resetAllData() {
-    db.ref("currentQuestion").remove();
-    db.ref("studentAnswers").remove(); // Xóa tất cả dữ liệu kết quả học sinh
-    document.getElementById("teacherQuestionImage").src = "";
-    document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
-    document.getElementById("timer").innerText = "Thời gian còn lại: 30s";
-    clearInterval(countdown);
-    document.getElementById("resultsList").innerHTML = ""; // Xóa bảng kết quả
-
-    // Xóa phương án đã chọn của học sinh
-    const studentsAnswersRef = db.ref("studentAnswers");
-    studentsAnswersRef.once("value").then(snapshot => {
-      snapshot.forEach(childSnapshot => {
-        const studentId = childSnapshot.key;
-        studentsAnswersRef.child(studentId).remove(); // Xóa toàn bộ dữ liệu của học sinh
-      });
-    });
-  }
-
-  // Chạy bộ đếm thời gian
-  function startTimer() {
-    timeLeft = 30;
-    document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
-
-    clearInterval(countdown);
-    countdown = setInterval(() => {
-      timeLeft--;
-      document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
-      if (timeLeft <= 0) {
-        clearInterval(countdown);
-        document.getElementById("timer").innerText = "Thời gian hết!";
-        const currentQ = parseInt(document.getElementById("currentQuestionText").innerText.split(":")[1].trim());
-        displayStudentResults(currentQ);
-      }
-    }, 1000);
-  }
-
-  // Hiển thị kết quả học sinh khi hết thời gian
-  function displayStudentResults(questionNumber) {
-    db.ref("studentAnswers").once("value", snapshot => {
-      const results = snapshot.val();
-      const resultsList = document.getElementById("resultsList");
-      resultsList.innerHTML = "";  // Xóa danh sách trước khi thêm mới
-
-      if (results) {
-        for (const studentId in results) {
-          const studentData = results[studentId];
-          if (studentData.question === questionNumber) {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${studentData.name}</td>
-              <td>${studentData.answer}</td> <!-- Hiển thị phương án chọn của học sinh -->
-              <td>${studentData.score}</td>
-            `;
-            resultsList.appendChild(row);
-          }
-        }
-      }
-    });
-  }
-</script>
-
-</body>
-</html>
+      document.getElementById(`question${number}`).classList.add("selected"); // Thê
