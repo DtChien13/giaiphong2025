@@ -2,93 +2,127 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Giáo viên điều khiển</title>
+  <title>👨‍🏫 Giáo viên điều khiển</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 20px;
+      background-color: #f9f9f9;
       display: flex;
+      gap: 20px;
     }
     #questionList {
-      width: 150px;
-      margin-right: 20px;
+      width: 180px;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px;
+      height: fit-content;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    #questionList h3 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #3498db;
     }
     #questionList button {
-      display: block;
       width: 100%;
       padding: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       background-color: #3498db;
       color: white;
       border: none;
       border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #questionList button:hover {
+      background-color: #2980b9;
     }
     #mainArea {
       flex-grow: 1;
-    }
-    img {
-      max-width: 400px;
-      height: auto;
-      margin-bottom: 20px;
-      border: 2px solid #ccc;
+      background: #ffffff;
+      border: 1px solid #ddd;
       border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     #controlPanel {
       margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
     #controlPanel button {
       padding: 10px 20px;
-      font-size: 18px;
-      margin-right: 10px;
+      font-size: 16px;
       background-color: #e67e22;
       color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #controlPanel button:hover {
+      background-color: #d35400;
     }
     #countdown {
-      font-size: 24px;
+      font-size: 22px;
       color: red;
-      margin: 10px 0;
+      font-weight: bold;
+    }
+    #currentQuestionInfo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #currentQuestionInfo img {
+      max-width: 500px;
+      width: 100%;
+      height: auto;
+      border: 2px solid #ccc;
+      border-radius: 10px;
     }
     #resultArea {
       margin-top: 20px;
     }
     #resultArea h3 {
       margin-bottom: 10px;
+      color: #2c3e50;
     }
-    #resultArea ul {
+    #answerList {
       list-style: none;
       padding: 0;
+      max-height: 250px;
+      overflow-y: auto;
     }
-    #resultArea li {
+    #answerList li {
       background: #f1f1f1;
-      padding: 8px;
-      margin-bottom: 5px;
+      padding: 10px;
+      margin-bottom: 8px;
       border-radius: 5px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
 
-<!-- Cột câu hỏi -->
+<!-- Cột chọn câu hỏi -->
 <div id="questionList">
-  <h3>Câu hỏi</h3>
-  <!-- Các nút câu hỏi -->
+  <h3>📚 Câu hỏi</h3>
 </div>
 
-<!-- Khu vực điều khiển và nội dung -->
+<!-- Khu vực chính -->
 <div id="mainArea">
   <div id="controlPanel">
     <button onclick="resetQuestion()">🔄 Reset</button>
+    <div id="countdown">⏱️ Còn lại: —</div>
   </div>
 
   <div id="currentQuestionInfo">
-    <div id="countdown">⏱️ Còn lại: —</div>
-    <img id="questionImage" src="" alt="Hình câu hỏi">
+    <img id="questionImage" src="" alt="Hình câu hỏi sẽ hiển thị ở đây">
   </div>
 
   <div id="resultArea">
@@ -119,13 +153,11 @@
   let countdownInt = null;
   let currentQuestion = null;
 
-  // Tạo nút câu hỏi
+  // Tạo nút chọn câu hỏi
   for (let i = 1; i <= 10; i++) {
     const btn = document.createElement("button");
     btn.textContent = "Câu " + i;
-    btn.onclick = () => {
-      startQuestion(i);
-    };
+    btn.onclick = () => startQuestion(i);
     questionListEl.appendChild(btn);
   }
 
@@ -137,12 +169,14 @@
 
     db.ref("currentQuestion").set({ number: qn });
     startCountdown(30);
-    answerListEl.innerHTML = ""; // Xoá kết quả cũ
+    answerListEl.innerHTML = ""; // Xóa kết quả cũ
   }
 
   function resetQuestion() {
     clearInterval(countdownInt);
     db.ref("currentQuestion").remove();
+    db.ref("answers").remove();
+    db.ref("resetSignal").set(Date.now()); // Thêm tín hiệu reset học sinh
     questionImage.src = "";
     countdownEl.innerText = "⏱️ Còn lại: —";
     currentQuestion = null;
