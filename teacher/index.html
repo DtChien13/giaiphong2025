@@ -2,145 +2,106 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>👨‍🏫 Giáo viên điều khiển</title>
+  <title>Giáo viên điều khiển</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
       margin: 20px;
-      background-color: #f9f9f9;
       display: flex;
       gap: 20px;
     }
     #questionList {
       width: 180px;
-      background: #ffffff;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 10px;
-      height: fit-content;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    #questionList h3 {
-      text-align: center;
-      margin-bottom: 10px;
-      color: #3498db;
     }
     #questionList button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-bottom: 8px;
       background-color: #3498db;
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      font-size: 16px;
+      transition: background 0.3s;
     }
     #questionList button.active {
-      background-color: #e67e22;
-    }
-    #questionList button:hover {
-      background-color: #2980b9;
+      background-color: #e74c3c;
     }
     #mainArea {
       flex-grow: 1;
-      background: #ffffff;
-      border: 1px solid #ddd;
+    }
+    img {
+      width: 400px;
+      max-width: 100%;
+      border: 2px solid #ccc;
       border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
     #controlPanel {
       margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
     }
     #controlPanel button {
       padding: 10px 20px;
-      font-size: 16px;
+      margin-right: 10px;
       background-color: #e67e22;
       color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    #controlPanel button:hover {
-      background-color: #d35400;
+      font-size: 16px;
     }
     #countdown {
-      font-size: 22px;
+      font-size: 24px;
       color: red;
-      font-weight: bold;
+      margin: 10px 0;
     }
-    #currentQuestionInfo {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #currentQuestionInfo img {
-      max-width: 500px;
-      width: 100%;
-      height: auto;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-    }
-    #resultArea {
-      margin-top: 20px;
-    }
-    #resultArea h3 {
-      margin-bottom: 10px;
-      color: #2c3e50;
-    }
-    #answerList {
+    table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
     }
-    #answerList th, #answerList td {
-      border: 1px solid #ddd;
-      padding: 8px;
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
       text-align: center;
     }
-    #answerList th {
-      background-color: #3498db;
-      color: white;
-    }
-    #answerList td {
-      background-color: #f9f9f9;
+    th {
+      background-color: #f7f7f7;
     }
   </style>
 </head>
 <body>
 
 <div id="questionList">
-  <h3>📚 Câu hỏi</h3>
+  <h3>Câu hỏi</h3>
 </div>
 
 <div id="mainArea">
   <div id="controlPanel">
-    <button onclick="resetQuestion()">🔄 Reset</button>
-    <div id="countdown">⏱️ Còn lại: —</div>
+    <button onclick="resetSystem()">🔄 Reset Hệ Thống</button>
   </div>
 
   <div id="currentQuestionInfo">
-    <img id="questionImage" src="" alt="Hình câu hỏi sẽ hiển thị ở đây">
+    <div id="countdown">⏱️ Còn lại: —</div>
+    <img id="questionImage" src="" alt="Hình câu hỏi">
   </div>
 
   <div id="resultArea">
     <h3>📋 Kết quả trả lời:</h3>
-    <table id="answerList">
+    <table>
       <thead>
         <tr>
-          <th>👤 Tên</th>
+         <th>👤 Nhóm </th>
           <th>🅰️ Phương án</th>
           <th>🏆 Điểm</th>
         </tr>
       </thead>
-      <tbody id="answerBody">
-      </tbody>
+      <tbody id="answerList"></tbody>
     </table>
   </div>
 </div>
@@ -161,56 +122,48 @@
   const questionListEl = document.getElementById("questionList");
   const questionImage = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
-  const answerBodyEl = document.getElementById("answerBody");
-
+  const answerListEl = document.getElementById("answerList");
   let countdownInt = null;
   let currentQuestion = null;
-  let answerKey = {
-    1: "A", 2: "B", 3: "C", 4: "D", 5: "A",
-    6: "B", 7: "C", 8: "D", 9: "A", 10: "B"
-  };
 
-  let buttons = [];
-
-  // Tạo nút chọn câu hỏi
+  // Tạo danh sách câu hỏi
   for (let i = 1; i <= 10; i++) {
     const btn = document.createElement("button");
     btn.textContent = "Câu " + i;
-    btn.onclick = () => startQuestion(i);
+    btn.onclick = () => startQuestion(i, btn);
     questionListEl.appendChild(btn);
-    buttons.push(btn);
   }
 
-  function startQuestion(qn) {
+  function startQuestion(qn, btn) {
     clearInterval(countdownInt);
+    currentQuestion = qn;
     const padded = String(qn).padStart(2, '0');
     questionImage.src = `./images/C${padded}.png`;
-    currentQuestion = qn;
 
     db.ref("currentQuestion").set({ number: qn });
-    startCountdown(30);
-    answerBodyEl.innerHTML = ""; // Xóa kết quả cũ
+    answerListEl.innerHTML = "";
 
-    buttons.forEach(b => b.classList.remove("active"));
-    buttons[qn-1].classList.add("active");
+    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    startCountdown(30);
   }
 
-  function resetQuestion() {
+  function resetSystem() {
     clearInterval(countdownInt);
     db.ref("currentQuestion").remove();
     db.ref("answers").remove();
     db.ref("resetSignal").set(Date.now());
     questionImage.src = "";
     countdownEl.innerText = "⏱️ Còn lại: —";
-    currentQuestion = null;
-    answerBodyEl.innerHTML = "";
-    buttons.forEach(b => b.classList.remove("active"));
+    answerListEl.innerHTML = "";
+    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+    alert("Đã reset toàn bộ hệ thống!");
   }
 
   function startCountdown(sec) {
     let t = sec;
     countdownEl.innerText = `⏱️ ${t}s`;
-
     countdownInt = setInterval(() => {
       t--;
       countdownEl.innerText = `⏱️ ${t}s`;
@@ -226,20 +179,15 @@
     if (!currentQuestion) return;
     db.ref("answers").once("value", snap => {
       const data = snap.val();
-      answerBodyEl.innerHTML = "";
+      answerListEl.innerHTML = "";
       if (data) {
         for (const name in data) {
           const answers = data[name];
-          const selected = answers["cau" + currentQuestion] || "Không chọn";
-          const correct = answerKey[currentQuestion];
-          const score = selected === correct ? 1 : 0;
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${name}</td>
-            <td>${selected}</td>
-            <td>${score}</td>
-          `;
-          answerBodyEl.appendChild(row);
+          const answer = answers["cau" + currentQuestion] || "Không chọn";
+          const score = (["A", "B", "C", "D"].includes(answer)) ? 10 : 0; // tính điểm 10 nếu chọn hợp lệ
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${name}</td><td>${answer}</td><td>${score}</td>`;
+          answerListEl.appendChild(tr);
         }
       }
     });
