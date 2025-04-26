@@ -62,11 +62,18 @@
     h2 {
       text-align: center; /* Căn giữa tiêu đề */
     }
+    #questionImage {
+      width: 100%;
+      height: auto;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      max-width: 600px; /* Giới hạn kích thước hình ảnh */
+    }
   </style>
 </head>
 <body>
 
-
+<h2>📋Điều khiển & Kết quả</h2>
 
 <div style="display: flex; gap: 40px;">
   <div id="questionButtons"></div>
@@ -90,6 +97,11 @@
 
     <br>
     <button style="background-color: red;" onclick="resetGame()">🔄 Reset dữ liệu</button>
+
+    <!-- Hình ảnh câu hỏi -->
+    <div id="questionImageContainer">
+      <img id="questionImage" src="" alt="Câu hỏi hình ảnh sẽ hiển thị ở đây">
+    </div>
   </div>
 </div>
 
@@ -116,6 +128,7 @@
   const currentQEl  = document.getElementById("currentQ");
   const resultsBody = document.getElementById("resultsBody");
   const ctx = document.getElementById("scoreChart").getContext("2d");
+  const questionImage = document.getElementById("questionImage");
   let barChart = null;
 
   // tạo nút 1–10
@@ -139,6 +152,8 @@
     // set hiện question & reset đồng hồ
     curQ=n; currentQEl.innerText=n;
     startCountdown(30);
+    // Thay đổi hình ảnh
+    questionImage.src = `images/C0${n}.png`;
     // thông báo cho student
     db.ref("currentQuestion").set({number:n,ts:Date.now()});
   }
@@ -196,10 +211,10 @@
       resultsBody.innerHTML=`<tr><td colspan="4">Chưa có dữ liệu...</td></tr>`;
       document.querySelectorAll("#questionButtons button").forEach(x=>x.classList.remove("selected"));
       if(barChart)barChart.destroy();
+      questionImage.src = ""; // Reset hình ảnh
     }
   }
 </script>
 
 </body>
 </html>
-
