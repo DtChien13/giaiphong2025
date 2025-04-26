@@ -1,57 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>PHẦN 1 </title>
+  <title>Học sinh trả lời</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; text-align: center; padding-top: 30px; }
-    button {
-      font-size: 18px; margin: 5px; padding: 10px 20px;
-      background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
     }
-    button.selected {
-      background-color: #ff9800;
+    img {
+      max-width: 90%;
+      height: auto;
+      margin-bottom: 20px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
     }
-    table { border-collapse: collapse; margin: 20px auto; width: 80%; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-    th { background-color: #f2f2f2; }
-    canvas { width: 300px !important; height: 200px !important; margin-top: 20px; }
-    #countdown { font-size: 24px; color: red; margin-top: 10px; }
+    #options button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    #options button.selected {
+      background-color: #f39c12;
+    }
+    #options button.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    #countdown {
+      font-size: 24px;
+      color: red;
+      margin-bottom: 20px;
+    }
+    #loginArea {
+      margin-bottom: 20px;
+    }
+    #loginArea input {
+      padding: 10px;
+      font-size: 18px;
+    }
+    #loginArea button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<h2>📋Điều khiển & Kết quả</h2>
+<h2>🎯 Hệ thống trả lời câu hỏi</h2>
 
-<div>
-  <p>Chọn câu để bắt đầu:</p>
-  <div id="questionButtons"></div>
+<!-- Phần nhập tên -->
+<div id="loginArea">
+  <h3>Nhập tên học sinh của bạn:</h3>
+  <input type="text" id="studentName" placeholder="Nhập tên..." />
+  <button onclick="startQuiz()">Bắt đầu</button>
 </div>
 
-<h3>⏱️ Còn lại: <span id="countdown">—</span></h3>
-
-<h3>Kết quả câu <span id="currentQ">—</span>:</h3>
-<table>
-  <thead>
-    <tr><th>Học sinh</th><th>Câu</th><th>Đáp án</th><th>Điểm</th></tr>
-  </thead>
-  <tbody id="resultsBody">
-    <tr><td colspan="4">Chưa có dữ liệu...</td></tr>
-  </tbody>
-</table>
-
-<h3>Biểu đồ tổng điểm</h3>
-<canvas id="scoreChart"></canvas>
-
-<br>
-<button style="background-color: red;" onclick="resetGame()">🔄 Reset dữ liệu</button>
+<!-- Phần hiển thị câu hỏi và đáp án -->
+<div id="quizArea" style="display:none;">
+  <div id="countdown">⏱️ Còn lại: —</div>
+  <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
+  <div id="options">
+    <button>A</button>
+    <button>B</button>
+    <button>C</button>
+    <button>D</button>
+  </div>
+</div>
 
 <script>
-  // Firebase setup
-  const cfg = {
+  // Cấu hình Firebase
+  const firebaseConfig = {
     apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
     authDomain: "giaiphong2025-697c5.firebaseapp.com",
     databaseURL: "https://giaiphong2025-697c5-default-rtdb.firebaseio.com",
@@ -60,99 +92,95 @@
     messagingSenderId: "205746810625",
     appId: "1:205746810625:web:ec05b354a6221f7b3af500"
   };
-  firebase.initializeApp(cfg);
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // đáp án đúng
-  const correct = {1:'A',2:'B',3:'C',4:'D',5:'A',6:'B',7:'C',8:'D',9:'A',10:'B'};
-
-  // UI refs
-  const questionContainer = document.getElementById("questionButtons");
+  // Các phần tử giao diện
+  const imageEl = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
-  const currentQEl  = document.getElementById("currentQ");
-  const resultsBody = document.getElementById("resultsBody");
-  const ctx = document.getElementById("scoreChart").getContext("2d");
-  let barChart = null;
+  const buttons = document.querySelectorAll("#options button");
+  let currentQuestion = null;
+  let countdownInt = null;
+  let answerAllowed = false;
 
-  // tạo nút 1–10
-  for(let i=1;i<=10;i++){
-    const b=document.createElement("button");
-    b.innerText="▶️ Câu "+i;
-    b.id="q"+i;
-    b.onclick=()=>startQuestion(i);
-    questionContainer.appendChild(b);
-  }
-
-  let countdownInt, curQ=null;
-
-  function startQuestion(n){
-    // clear bảng cũ
-    resultsBody.innerHTML=`<tr><td colspan="4">Chưa có dữ liệu...</td></tr>`;
-    // highlight nút
-    document.querySelectorAll("#questionButtons button")
-      .forEach(x=>x.classList.remove("selected"));
-    document.getElementById("q"+n).classList.add("selected");
-    // set hiện question & reset đồng hồ
-    curQ=n; currentQEl.innerText=n;
-    startCountdown(30);
-    // thông báo cho student
-    db.ref("currentQuestion").set({number:n,ts:Date.now()});
-  }
-
-  function startCountdown(sec){
-    clearInterval(countdownInt);
-    let t=sec;
-    countdownEl.innerText=`${t}s`;
-    countdownInt=setInterval(()=>{
-      t--; countdownEl.innerText=`${t}s`;
-      if(t<=0){
-        clearInterval(countdownInt);
-        countdownEl.innerText="0s";
-      }
-    },1000);
-  }
-
-  // lắng nghe answers realtime
-  db.ref("answers").on("value",snap=>{
-    const data=snap.val()||{};
-    // cập nhật biểu đồ tổng điểm
-    const names=Object.keys(data), pts=names.map(u=>{
-      let sum=0;
-      for(const k in data[u]){
-        const qn=+k.replace("cau","");
-        if(data[u][k]===correct[qn]) sum+=3;
-      }
-      return sum;
-    });
-    // color array
-    const colors=names.map(_=>'#'+Math.floor(Math.random()*0xFFFFFF).toString(16));
-    if(barChart) barChart.destroy();
-    barChart=new Chart(ctx,{type:'bar',
-      data:{labels:names,datasets:[{data:pts,backgroundColor:colors,borderColor:colors,borderWidth:1}]},
-      options:{responsive:true,scales:{y:{beginAtZero:true,max:30}},plugins:{legend:{display:false}}}
-    });
-    // nếu đang xem 1 câu, cập nhật luôn bảng câu đó
-    if(curQ){
-      const rows=names.map(u=>{
-        const ans=(data[u]['cau'+curQ]||'');
-        const sc=(ans===correct[curQ]?3:0);
-        return `<tr><td>${u}</td><td>${curQ}</td><td>${ans}</td><td>${sc}</td></tr>`;
-      });
-      resultsBody.innerHTML=rows.length?rows.join(""):`<tr><td colspan="4">Chưa có dữ liệu...</td></tr>`;
+  // Khi giáo viên gửi câu hỏi
+  db.ref("currentQuestion").on("value", snap => {
+    const val = snap.val();
+    if (!val) {
+      imageEl.src = "";
+      currentQuestion = null;
+      countdownEl.innerText = "⏱️ Còn lại: —";
+      disableButtons();
+      return;
     }
+    const qn = val.number;
+    currentQuestion = qn;
+    imageEl.src = `./c${qn}.png`; // Đường dẫn ảnh theo số câu
+    startCountdown(30); // Bắt đầu đếm ngược
   });
 
-  function resetGame(){
-    if(confirm("Xóa toàn bộ dữ liệu?")){
-      db.ref("answers").remove();
-      db.ref("currentQuestion").remove();
-      clearInterval(countdownInt);
-      countdownEl.innerText="—";
-      currentQEl.innerText="—";
-      resultsBody.innerHTML=`<tr><td colspan="4">Chưa có dữ liệu...</td></tr>`;
-      document.querySelectorAll("#questionButtons button").forEach(x=>x.classList.remove("selected"));
-      if(barChart)barChart.destroy();
+  // Hàm đếm ngược
+  function startCountdown(sec) {
+    clearInterval(countdownInt);
+    let t = sec;
+    countdownEl.innerText = `⏱️ ${t}s`;
+    answerAllowed = true;
+    enableButtons();
+    countdownInt = setInterval(() => {
+      t--;
+      countdownEl.innerText = `⏱️ ${t}s`;
+      if (t <= 0) {
+        clearInterval(countdownInt);
+        countdownEl.innerText = "⏱️ 0s";
+        answerAllowed = false;
+        disableButtons();
+      }
+    }, 1000);
+  }
+
+  // Khi học sinh bấm chọn đáp án
+  buttons.forEach(b => {
+    b.onclick = () => {
+      if (!answerAllowed || !currentQuestion) return;
+      const ans = b.innerText;
+      const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
+      if (name) {
+        localStorage.setItem("name", name);
+        db.ref("answers/" + name + "/cau" + currentQuestion).set(ans);
+        buttons.forEach(x => x.classList.remove("selected"));
+        b.classList.add("selected");
+      } else {
+        alert("Vui lòng nhập tên!");
+      }
+    };
+  });
+
+  // Hàm vô hiệu hóa các nút
+  function disableButtons() {
+    buttons.forEach(b => {
+      b.classList.add("disabled");
+      b.disabled = true;
+    });
+  }
+
+  // Hàm kích hoạt các nút
+  function enableButtons() {
+    buttons.forEach(b => {
+      b.classList.remove("disabled");
+      b.disabled = false;
+    });
+  }
+
+  // Hàm bắt đầu câu hỏi khi học sinh nhập tên
+  function startQuiz() {
+    const nameInput = document.getElementById("studentName").value.trim();
+    if (nameInput.length < 1) {
+      alert("Vui lòng nhập tên!");
+      return;
     }
+    localStorage.setItem("name", nameInput);
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("quizArea").style.display = "block";
   }
 </script>
 
