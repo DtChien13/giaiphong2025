@@ -36,7 +36,7 @@
       background-color: #45a049;
     }
     #sidebar button.selected {
-      background-color: #f39c12;
+      background-color: #f39c12; /* Màu khác cho nút được chọn */
     }
     #content {
       flex: 1;
@@ -153,51 +153,83 @@
       // Đổi màu nút câu hỏi đã chọn
       const buttons = document.querySelectorAll("#sidebar button");
       buttons.forEach(button => {
-        button.classList.remove("selected");
+        button.classList.remove("selected"); // Xóa lớp "selected" của tất cả nút
       });
-      document.getElementById(`question${number}`).classList.add("selected");
+      document.getElementById(`question${number}`).classList.add("selected"); // Thêm lớp "selected" vào nút đã chọn
     }
   });
 
-  // Hàm hiển thị kết quả học sinh
-  function displayStudentResults(questionNumber) {
-    db.ref("answers").once("value", snapshot => {
-      const results = snapshot.val();
-      const resultList = document.getElementById("resultsList");
-      resultList.innerHTML = ""; // Xóa các kết quả cũ
-
-      for (const studentName in results) {
-        const answers = results[studentName];
-        const answer = answers[`cau${questionNumber}`] || "Không chọn";
-        const score = (answer !== "Không chọn") ? "1 điểm" : "0 điểm";
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${studentName}</td>
-          <td>${answer}</td>
-          <td>${score}</td>
-        `;
-        resultList.appendChild(row);
-      }
+  // Hàm chọn câu hỏi cho giáo viên
+  function selectQuestion(number) {
+    db.ref("currentQuestion").set({
+      number: number
     });
   }
 
   // Hàm reset toàn bộ dữ liệu
   function resetAllData() {
-    // Reset Firebase
-    db.ref("answers").remove();
-
-    // Reset học sinh
-    db.ref("currentQuestion").set({ number: null });
+    db.ref("currentQuestion").remove();
+    db.ref("studentAnswers").remove(); // Xóa tất cả dữ liệu kết quả học sinh
     document.getElementById("teacherQuestionImage").src = "";
     document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
+    document.getElementById("timer").innerText = "Thời gian còn lại: 30s";
+    clearInterval(countdown);
+    document.getElementById("resultsList").innerHTML = ""; // Xóa bảng kết quả
 
-    // Reset bảng kết quả
-    const resultList = document.getElementById("resultsList");
-    resultList.innerHTML = ""; // Xóa kết quả
+    // Xóa phương án đã chọn của học sinh
+    const studentsAnswersRef = db.ref("studentAnswers");
+    studentsAnswersRef.once("value").then(snapshot => {
+      snapshot.forEach(childSnapshot => {
+        const studentId = childSnapshot.key;
+        studentsAnswersRef.child(studentId).remove(); // Xóa toàn bộ dữ liệu của học sinh
+      });
+    });
+  }
 
-    // Thông báo cho học sinh
-    alert("Tất cả dữ liệu đã được reset.");
+  // Chạy bộ đếm thời gian
+  function startTimer() {
+    timeLeft = 30;
+    document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
+
+    clearInterval(countdown);
+    countdown = setInterval(() => {
+      timeLeft--;
+      document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        document.getElementById("timer").innerText = "Thời gian hết!";
+        const currentQ = parseInt(document.getElementById("currentQuestionText").innerText.split(":")[1].trim());
+        displayStudentResults(currentQ);
+      }
+    }, 1000);
+  }
+
+  // Hiển thị kết quả học sinh khi hết thời gian
+  function displayStudentResults(questionNumber) {
+    db.ref("studentAnswers").once("value", snapshot => {
+      const results = snapshot.val();
+      const resultsList = document.getElementById("resultsList");
+      resultsList.innerHTML = "";  // Xóa danh sách trước khi thêm mới
+
+      if (results) {
+        for (const studentId in results) {
+          const studentData = results[studentId];
+          if (studentData.question === questionNumber) {
+            const row = document.createElement("tr");
+
+            // Xác định câu trả lời của học sinh và đánh dấu đúng/sai
+            const answerClass = studentData.answer === studentData.correctAnswer ? 'correct' : 'incorrect';
+            
+            row.innerHTML = `
+              <td>${studentData.name}</td>
+              <td class="${answerClass}">${studentData.answer}</td> <!-- Hiển thị phương án chọn của học sinh -->
+              <td>${studentData.score}</td>
+            `;
+            resultsList.appendChild(row);
+          }
+        }
+      }
+    });
   }
 </script>
 
