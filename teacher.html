@@ -1,42 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Giao viên xem kết quả</title>
+  <title>Bảng đáp án học sinh</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
-  <h2>Kết quả của học sinh:</h2>
-  <ul id="results"></ul>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <h2>Đáp án học sinh</h2>
+  <ul id="answers"></ul>
 
   <script>
-    // THAY cấu hình này bằng thông tin Firebase của bạn
-  const firebaseConfig = {
-  apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
-  authDomain: "giaiphong2025-697c5.firebaseapp.com",
-  databaseURL: "https://giaiphong2025-697c5-default-rtdb.firebaseio.com",
-  projectId: "giaiphong2025-697c5",
- storageBucket: "giaiphong2025-697c5.appspot.com",
-  messagingSenderId: "205746810625",
-  appId: "1:205746810625:web:ec05b354a6221f7b3af500",
-  measurementId: "G-1ZXJDGYPME"
-};
-
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
+      authDomain: "giaiphong2025-697c5.firebaseapp.com",
+      databaseURL: "https://giaiphong2025-697c5-default-rtdb.firebaseio.com",
+      projectId: "giaiphong2025-697c5",
+      storageBucket: "giaiphong2025-697c5.appspot.com",
+      messagingSenderId: "205746810625",
+      appId: "1:205746810625:web:ec05b354a6221f7b3af500",
+      measurementId: "G-1ZXJDGYPME"
+    };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const database = firebase.database();
 
-    const resultsList = document.getElementById("results");
+    const answersRef = database.ref("answers");
+    const answersList = document.getElementById("answers");
 
-    db.ref("answers").on("value", snapshot => {
-      const data = snapshot.val();
-      resultsList.innerHTML = "";
-      for (let student in data) {
-        const item = document.createElement("li");
-        item.textContent = `${student}: ${data[student].answer}`;
-        resultsList.appendChild(item);
-      }
+    answersRef.on("value", (snapshot) => {
+      answersList.innerHTML = "";
+      snapshot.forEach((child) => {
+        const li = document.createElement("li");
+        li.textContent = `${child.key}: ${child.val()}`;
+        answersList.appendChild(li);
+      });
     });
   </script>
 </body>
