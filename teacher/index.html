@@ -242,9 +242,9 @@ function startQuestion(qn, btn) {
   btn.classList.add("selected");
 
   if (qn === 10) {
-    showVideoThenImage('./videos/c10.mp4', imgPath); // câu 10: phải xem hết video rồi mới hiện ảnh
+    showVideoThenImage('./videos/C10.mp4', imgPath); // câu 10: phải xem hết video rồi mới hiện ảnh
   } else if (qn === 1 || qn === 3) {
-    showVideoAndImageTogether(`./videos/c${qn}.mp4`, imgPath); // câu 1 và 3: hiện video + ảnh cùng lúc
+    showVideoAndImageTogether(`./videos/C${qn}.mp4`, imgPath); // câu 1 và 3: hiện video + ảnh cùng lúc
   } else {
     questionImage.style.display = "block";
     questionImage.src = imgPath;
