@@ -8,122 +8,97 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 20px;
       display: flex;
-      height: 100vh;
     }
-    #sidebar {
-      width: 200px;
-      background-color: #f7f7f7;
-      padding: 20px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      overflow-y: auto;
+    #questionList {
+      width: 150px;
+      margin-right: 20px;
     }
-    #sidebar button {
+    #questionList button {
+      display: block;
       width: 100%;
-      margin-bottom: 10px;
       padding: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      background-color: #4CAF50;
+      margin-bottom: 10px;
+      background-color: #3498db;
       color: white;
+      border: none;
       border-radius: 8px;
-      transition: 0.3s;
+      cursor: pointer;
     }
-    #sidebar button:hover {
-      background-color: #45a049;
-    }
-    #sidebar button.selected {
-      background-color: #f39c12; /* Màu khác cho nút được chọn */
-    }
-    #content {
-      flex: 1;
-      padding: 20px;
-      text-align: center;
-      overflow-y: auto;
+    #mainArea {
+      flex-grow: 1;
     }
     img {
-      max-width: 90%;
-      margin-top: 20px;
+      max-width: 400px;
+      height: auto;
+      margin-bottom: 20px;
       border: 2px solid #ccc;
       border-radius: 10px;
     }
-    #currentQuestionText {
-      font-size: 24px;
-      margin-bottom: 10px;
+    #controlPanel {
+      margin-bottom: 20px;
     }
-    #timer {
-      font-size: 28px;
+    #controlPanel button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin-right: 10px;
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #countdown {
+      font-size: 24px;
       color: red;
+      margin: 10px 0;
+    }
+    #resultArea {
       margin-top: 20px;
     }
-    #studentResults {
-      margin-top: 30px;
+    #resultArea h3 {
+      margin-bottom: 10px;
     }
-    table {
-      width: 80%;
-      margin: 20px auto;
-      border-collapse: collapse;
+    #resultArea ul {
+      list-style: none;
+      padding: 0;
     }
-    th, td {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    .correct {
-      background-color: #c8e6c9;
-    }
-    .incorrect {
-      background-color: #ffccbc;
+    #resultArea li {
+      background: #f1f1f1;
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-<div id="sidebar">
-  <h3>Chọn câu hỏi</h3>
-  <button id="question1" onclick="selectQuestion(1)">Câu 1</button>
-  <button id="question2" onclick="selectQuestion(2)">Câu 2</button>
-  <button id="question3" onclick="selectQuestion(3)">Câu 3</button>
-  <button id="question4" onclick="selectQuestion(4)">Câu 4</button>
-  <button id="question5" onclick="selectQuestion(5)">Câu 5</button>
-  <button id="question6" onclick="selectQuestion(6)">Câu 6</button>
-  <button id="question7" onclick="selectQuestion(7)">Câu 7</button>
-  <button id="question8" onclick="selectQuestion(8)">Câu 8</button>
-  <button id="question9" onclick="selectQuestion(9)">Câu 9</button>
-  <button id="question10" onclick="selectQuestion(10)">Câu 10</button>
-  <hr>
-  <button style="background-color:#e74c3c;" onclick="resetAllData()">Reset</button>
+<!-- Cột câu hỏi -->
+<div id="questionList">
+  <h3>Câu hỏi</h3>
+  <!-- Các nút câu hỏi -->
 </div>
 
-<div id="content">
-  <div id="currentQuestionText">Câu hỏi hiện tại: —</div>
-  <img id="teacherQuestionImage" src="" alt="Câu hỏi sẽ hiển thị tại đây">
-  <div id="timer">Thời gian còn lại: 30s</div>
-  
-  <div id="studentResults">
-    <h3>Kết quả học sinh:</h3>
-    <table id="resultsTable">
-      <thead>
-        <tr>
-          <th>Tên học sinh</th>
-          <th>Đáp án</th>
-          <th>Điểm</th>
-        </tr>
-      </thead>
-      <tbody id="resultsList">
-      </tbody>
-    </table>
+<!-- Khu vực điều khiển và nội dung -->
+<div id="mainArea">
+  <div id="controlPanel">
+    <button onclick="resetQuestion()">🔄 Reset</button>
+  </div>
+
+  <div id="currentQuestionInfo">
+    <div id="countdown">⏱️ Còn lại: —</div>
+    <img id="questionImage" src="" alt="Hình câu hỏi">
+  </div>
+
+  <div id="resultArea">
+    <h3>📋 Kết quả trả lời:</h3>
+    <ul id="answerList"></ul>
   </div>
 </div>
 
 <script>
-  // Cấu hình Firebase
+  // Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
     authDomain: "giaiphong2025-697c5.firebaseapp.com",
@@ -136,97 +111,71 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  let countdown;
-  let timeLeft = 30;
+  const questionListEl = document.getElementById("questionList");
+  const questionImage = document.getElementById("questionImage");
+  const countdownEl = document.getElementById("countdown");
+  const answerListEl = document.getElementById("answerList");
 
-  // Lắng nghe sự thay đổi của câu hỏi hiện tại
-  db.ref("currentQuestion").on("value", snapshot => {
-    const data = snapshot.val();
-    if (data && data.number) {
-      const number = data.number;
-      const padded = String(number).padStart(2, '0');
-      document.getElementById("teacherQuestionImage").src = `./images/C${padded}.png`;
-      document.getElementById("currentQuestionText").innerText = `Câu hỏi hiện tại: ${number}`;
-      startTimer();
-      displayStudentResults(number);
+  let countdownInt = null;
+  let currentQuestion = null;
 
-      // Đổi màu nút câu hỏi đã chọn
-      const buttons = document.querySelectorAll("#sidebar button");
-      buttons.forEach(button => {
-        button.classList.remove("selected"); // Xóa lớp "selected" của tất cả nút
-      });
-      document.getElementById(`question${number}`).classList.add("selected"); // Thêm lớp "selected" vào nút đã chọn
-    }
-  });
-
-  // Hàm chọn câu hỏi cho giáo viên
-  function selectQuestion(number) {
-    db.ref("currentQuestion").set({
-      number: number
-    });
+  // Tạo nút câu hỏi
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = "Câu " + i;
+    btn.onclick = () => {
+      startQuestion(i);
+    };
+    questionListEl.appendChild(btn);
   }
 
-  // Hàm reset toàn bộ dữ liệu
-  function resetAllData() {
+  function startQuestion(qn) {
+    clearInterval(countdownInt);
+    const padded = String(qn).padStart(2, '0');
+    questionImage.src = `./images/C${padded}.png`;
+    currentQuestion = qn;
+
+    db.ref("currentQuestion").set({ number: qn });
+    startCountdown(30);
+    answerListEl.innerHTML = ""; // Xoá kết quả cũ
+  }
+
+  function resetQuestion() {
+    clearInterval(countdownInt);
     db.ref("currentQuestion").remove();
-    db.ref("studentAnswers").remove(); // Xóa tất cả dữ liệu kết quả học sinh
-    document.getElementById("teacherQuestionImage").src = "";
-    document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
-    document.getElementById("timer").innerText = "Thời gian còn lại: 30s";
-    clearInterval(countdown);
-    document.getElementById("resultsList").innerHTML = ""; // Xóa bảng kết quả
-
-    // Xóa phương án đã chọn của học sinh
-    const studentsAnswersRef = db.ref("studentAnswers");
-    studentsAnswersRef.once("value").then(snapshot => {
-      snapshot.forEach(childSnapshot => {
-        const studentId = childSnapshot.key;
-        studentsAnswersRef.child(studentId).remove(); // Xóa toàn bộ dữ liệu của học sinh
-      });
-    });
+    questionImage.src = "";
+    countdownEl.innerText = "⏱️ Còn lại: —";
+    currentQuestion = null;
+    answerListEl.innerHTML = "";
   }
 
-  // Chạy bộ đếm thời gian
-  function startTimer() {
-    timeLeft = 30;
-    document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
+  function startCountdown(sec) {
+    let t = sec;
+    countdownEl.innerText = `⏱️ ${t}s`;
 
-    clearInterval(countdown);
-    countdown = setInterval(() => {
-      timeLeft--;
-      document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
-      if (timeLeft <= 0) {
-        clearInterval(countdown);
-        document.getElementById("timer").innerText = "Thời gian hết!";
-        const currentQ = parseInt(document.getElementById("currentQuestionText").innerText.split(":")[1].trim());
-        displayStudentResults(currentQ);
+    countdownInt = setInterval(() => {
+      t--;
+      countdownEl.innerText = `⏱️ ${t}s`;
+      if (t <= 0) {
+        clearInterval(countdownInt);
+        countdownEl.innerText = "⏱️ 0s";
+        loadAnswers();
       }
     }, 1000);
   }
 
-  // Hiển thị kết quả học sinh khi hết thời gian
-  function displayStudentResults(questionNumber) {
-    db.ref("studentAnswers").once("value", snapshot => {
-      const results = snapshot.val();
-      const resultsList = document.getElementById("resultsList");
-      resultsList.innerHTML = "";  // Xóa danh sách trước khi thêm mới
-
-      if (results) {
-        for (const studentId in results) {
-          const studentData = results[studentId];
-          if (studentData.question === questionNumber) {
-            const row = document.createElement("tr");
-
-            // Xác định câu trả lời của học sinh và đánh dấu đúng/sai
-            const answerClass = studentData.answer === studentData.correctAnswer ? 'correct' : 'incorrect';
-            
-            row.innerHTML = `
-              <td>${studentData.name}</td>
-              <td class="${answerClass}">${studentData.answer}</td> <!-- Hiển thị phương án chọn của học sinh -->
-              <td>${studentData.score}</td>
-            `;
-            resultsList.appendChild(row);
-          }
+  function loadAnswers() {
+    if (!currentQuestion) return;
+    db.ref("answers").once("value", snap => {
+      const data = snap.val();
+      answerListEl.innerHTML = "";
+      if (data) {
+        for (const name in data) {
+          const answers = data[name];
+          const answer = answers["cau" + currentQuestion] || "Không chọn";
+          const li = document.createElement("li");
+          li.textContent = `${name}: ${answer}`;
+          answerListEl.appendChild(li);
         }
       }
     });
