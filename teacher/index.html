@@ -35,6 +35,9 @@
     #sidebar button:hover {
       background-color: #45a049;
     }
+    #sidebar button.selected {
+      background-color: #f39c12; /* Màu khác cho nút được chọn */
+    }
     #content {
       flex: 1;
       padding: 20px;
@@ -78,16 +81,16 @@
 
 <div id="sidebar">
   <h3>Chọn câu hỏi</h3>
-  <button onclick="selectQuestion(1)">Câu 1</button>
-  <button onclick="selectQuestion(2)">Câu 2</button>
-  <button onclick="selectQuestion(3)">Câu 3</button>
-  <button onclick="selectQuestion(4)">Câu 4</button>
-  <button onclick="selectQuestion(5)">Câu 5</button>
-  <button onclick="selectQuestion(6)">Câu 6</button>
-  <button onclick="selectQuestion(7)">Câu 7</button>
-  <button onclick="selectQuestion(8)">Câu 8</button>
-  <button onclick="selectQuestion(9)">Câu 9</button>
-  <button onclick="selectQuestion(10)">Câu 10</button>
+  <button id="question1" onclick="selectQuestion(1)">Câu 1</button>
+  <button id="question2" onclick="selectQuestion(2)">Câu 2</button>
+  <button id="question3" onclick="selectQuestion(3)">Câu 3</button>
+  <button id="question4" onclick="selectQuestion(4)">Câu 4</button>
+  <button id="question5" onclick="selectQuestion(5)">Câu 5</button>
+  <button id="question6" onclick="selectQuestion(6)">Câu 6</button>
+  <button id="question7" onclick="selectQuestion(7)">Câu 7</button>
+  <button id="question8" onclick="selectQuestion(8)">Câu 8</button>
+  <button id="question9" onclick="selectQuestion(9)">Câu 9</button>
+  <button id="question10" onclick="selectQuestion(10)">Câu 10</button>
   <hr>
   <button style="background-color:#e74c3c;" onclick="resetQuestion()">Reset</button>
 </div>
@@ -140,15 +143,24 @@
       document.getElementById("currentQuestionText").innerText = `Câu hỏi hiện tại: ${number}`;
       startTimer();
       displayStudentResults(number);
+
+      // Đổi màu nút câu hỏi đã chọn
+      const buttons = document.querySelectorAll("#sidebar button");
+      buttons.forEach(button => {
+        button.classList.remove("selected"); // Xóa lớp "selected" của tất cả nút
+      });
+      document.getElementById(`question${number}`).classList.add("selected"); // Thêm lớp "selected" vào nút đã chọn
     }
   });
 
+  // Hàm chọn câu hỏi cho giáo viên
   function selectQuestion(number) {
     db.ref("currentQuestion").set({
       number: number
     });
   }
 
+  // Reset câu hỏi
   function resetQuestion() {
     db.ref("currentQuestion").remove();
     document.getElementById("teacherQuestionImage").src = "";
@@ -158,6 +170,7 @@
     document.getElementById("resultsList").innerHTML = ""; // Xóa bảng kết quả
   }
 
+  // Chạy bộ đếm thời gian
   function startTimer() {
     timeLeft = 30;
     document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
@@ -169,18 +182,18 @@
       if (timeLeft <= 0) {
         clearInterval(countdown);
         document.getElementById("timer").innerText = "Thời gian hết!";
-        // Khi hết giờ, có thể reload lại kết quả mới nhất
-        const currentQ = parseInt(document.getElementById("currentQuestionText").innerText.split(":")[1]);
+        const currentQ = parseInt(document.getElementById("currentQuestionText").innerText.split(":")[1].trim());
         displayStudentResults(currentQ);
       }
     }, 1000);
   }
 
+  // Hiển thị kết quả học sinh khi hết thời gian
   function displayStudentResults(questionNumber) {
     db.ref("studentAnswers").once("value", snapshot => {
       const results = snapshot.val();
       const resultsList = document.getElementById("resultsList");
-      resultsList.innerHTML = "";
+      resultsList.innerHTML = "";  // Xóa danh sách trước khi thêm mới
 
       if (results) {
         for (const studentId in results) {
