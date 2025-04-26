@@ -96,11 +96,10 @@
         if (currentQuestion !== qn) {
           currentQuestion = qn;
           const padded = String(qn).padStart(2, '0');
-          imageEl.src = ./images/C${padded}.png;
+          imageEl.src = `./images/C${padded}.png`;
           resetButtonSelection();
           enableButtons();
           startCountdown(30);
-
         }
       }
     });
@@ -109,13 +108,13 @@
   function startCountdown(sec) {
     clearInterval(countdownInt);
     let t = sec;
-    countdownEl.innerText = ⏱️ ${t}s;
+    countdownEl.innerText = `⏱️ ${t}s`;
     answerAllowed = true;
     enableButtons();
 
     countdownInt = setInterval(() => {
       t--;
-      countdownEl.innerText = ⏱️ ${t}s;
+      countdownEl.innerText = `⏱️ ${t}s`;
       if (t <= 0) {
         clearInterval(countdownInt);
         countdownEl.innerText = "⏱️ 0s";
@@ -136,29 +135,20 @@
     const ans = selectedAnswers[key] || "Không chọn";
     allAnswers[key] = ans;
     const listItem = document.createElement("li");
-    listItem.textContent = Câu ${currentQuestion}: ${ans};
+    listItem.textContent = `Câu ${currentQuestion}: ${ans}`;
     answeredQuestionsEl.appendChild(listItem);
     db.ref("answers/" + name).set(allAnswers);
   }
 
- buttons.forEach(b => {
-  b.onclick = () => {
-    if (!answerAllowed || !currentQuestion) return;
-    const ans = b.innerText;
-    const key = "cau" + currentQuestion;
-    selectedAnswers[key] = ans;
-    allAnswers[key] = ans; // << thêm dòng này để đồng bộ luôn
-    resetButtonSelection();
-    b.classList.add("selected");
-
-    // Lưu ngay lên Firebase khi chọn
-    const name = localStorage.getItem("name");
-    if (name) {
-      db.ref("answers/" + name).set(allAnswers);
-    }
-  };
-});
-
+  buttons.forEach(b => {
+    b.onclick = () => {
+      if (!answerAllowed || !currentQuestion) return;
+      const ans = b.innerText;
+      selectedAnswers["cau" + currentQuestion] = ans;
+      resetButtonSelection();
+      b.classList.add("selected");
+    };
+  });
 
   function resetButtonSelection() {
     buttons.forEach(b => b.classList.remove("selected"));
@@ -192,7 +182,7 @@
           if (currentQuestion !== qn) {
             currentQuestion = qn;
             const padded = String(qn).padStart(2, '0');
-            imageEl.src = ./images/C${padded}.png;
+            imageEl.src = `./images/C${padded}.png`;
             resetButtonSelection();
             enableButtons();
             startCountdown(30);
