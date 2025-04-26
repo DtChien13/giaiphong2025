@@ -68,7 +68,7 @@
       color: red;
       margin: 10px 0;
     }
-    .mediaDisplay {
+    #questionImage {
       width: 600px;
       max-width: 90%;
       border: 2px solid #ccc;
@@ -132,6 +132,13 @@
       text-align: center;
       font-weight: bold;
     }
+    .mediaDisplay {
+      width: 600px;
+      max-width: 90%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
@@ -147,10 +154,9 @@
     <button onclick="openExplain(3)">📖 Giải thích 3</button>
     <button onclick="openExplain(4)">📖 Giải thích 4</button>
   </div>
-
   <div id="currentQuestionInfo">
     <div id="countdown">⏱️ Còn lại: —</div>
-    <img id="questionImage" class="mediaDisplay" src="" alt="Hình câu hỏi">
+    <img id="questionImage" src="" alt="Hình câu hỏi">
   </div>
 
   <div id="resultArea">
@@ -178,170 +184,174 @@
 </div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
-    authDomain: "giaiphong2025-697c5.firebaseapp.com",
-    databaseURL: "https://giaiphong2025-697c5-default-rtdb.firebaseio.com",
-    projectId: "giaiphong2025-697c5",
-    storageBucket: "giaiphong2025-697c5.appspot.com",
-    messagingSenderId: "205746810625",
-    appId: "1:205746810625:web:ec05b354a6221f7b3af500"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+const firebaseConfig = {
+  apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
+  authDomain: "giaiphong2025-697c5.firebaseapp.com",
+  databaseURL: "https://giaiphong2025-697c5-default-rtdb.firebaseio.com",
+  projectId: "giaiphong2025-697c5",
+  storageBucket: "giaiphong2025-697c5.appspot.com",
+  messagingSenderId: "205746810625",
+  appId: "1:205746810625:web:ec05b354a6221f7b3af500"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  const questionListEl = document.getElementById("questionList");
-  const questionImage = document.getElementById("questionImage");
-  const countdownEl = document.getElementById("countdown");
-  const answerListEl = document.getElementById("answerList");
-  const team1El = document.getElementById("team1");
-  const team2El = document.getElementById("team2");
-  let countdownInt = null;
-  let currentQuestion = null;
+const questionListEl = document.getElementById("questionList");
+const questionImage = document.getElementById("questionImage");
+const countdownEl = document.getElementById("countdown");
+const answerListEl = document.getElementById("answerList");
+const team1El = document.getElementById("team1");
+const team2El = document.getElementById("team2");
 
-  const correctAnswers = {
-    cau1: "B", cau2: "C", cau3: "C", cau4: "D", cau5: "B",
-    cau6: "D", cau7: "A", cau8: "D", cau9: "A", cau10: "D"
-  };
+let countdownInt = null;
+let currentQuestion = null;
 
-  let studentAnswers = {};
-  let teamScores = { team1: 0, team2: 0 };
+const correctAnswers = {
+  cau1: "B", cau2: "C", cau3: "C", cau4: "D", cau5: "B",
+  cau6: "D", cau7: "A", cau8: "D", cau9: "A", cau10: "D"
+};
 
-  const questionsWithVideo = {
-    10: "videos/c10_intro.mp4"  // câu 10 có video trước
-  };
+let studentAnswers = {};
+let teamScores = { team1: 0, team2: 0 };
 
-  for (let i = 1; i <= 10; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = "Câu " + i;
-    btn.onclick = () => startQuestion(i, btn);
-    questionListEl.appendChild(btn);
+for (let i = 1; i <= 10; i++) {
+  const btn = document.createElement("button");
+  btn.textContent = "Câu " + i;
+  btn.onclick = () => startQuestion(i, btn);
+  questionListEl.appendChild(btn);
+}
+
+function startQuestion(qn, btn) {
+  clearInterval(countdownInt);
+  currentQuestion = qn;
+
+  const padded = String(qn).padStart(2, '0');
+  const imgPath = `./images/C${padded}.png`;
+
+  // Xóa video cũ nếu có
+  const oldVideo = document.querySelector("video");
+  if (oldVideo) oldVideo.remove();
+
+  db.ref("currentQuestion").set({ number: qn });
+  answerListEl.innerHTML = "";
+
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+
+  if (qn === 10) {
+    showVideoThenImage('./videos/c10.mp4', imgPath);
+  } else {
+    questionImage.style.display = "block";
+    questionImage.src = imgPath;
+    startCountdown(30);
   }
+}
 
-  function startQuestion(qn, btn) {
-    clearInterval(countdownInt);
-    currentQuestion = qn;
-    const padded = String(qn).padStart(2, '0');
+function showVideoThenImage(videoSrc, imgSrc) {
+  const video = document.createElement("video");
+  video.src = videoSrc;
+  video.controls = true;
+  video.autoplay = true;
+  video.className = "mediaDisplay";
 
-    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
+  questionImage.style.display = "none"; // Ẩn ảnh
+  questionImage.parentNode.insertBefore(video, questionImage);
 
-    answerListEl.innerHTML = "";
-    db.ref("currentQuestion").set({ number: qn });
+  video.addEventListener("ended", () => {
+    video.remove();
+    questionImage.style.display = "block";
+    questionImage.src = imgSrc;
+    startCountdown(30);
+  });
+}
 
-    if (questionsWithVideo[qn]) {
-      showVideoThenImage(questionsWithVideo[qn], `./images/C${padded}.png`);
-    } else {
-      questionImage.src = `./images/C${padded}.png`;
-      questionImage.style.display = "block";
-      startCountdown(30);
-    }
-  }
+function resetSystem() {
+  clearInterval(countdownInt);
+  db.ref("currentQuestion").remove();
+  db.ref("answers").remove();
+  db.ref("resetSignal").set(Date.now());
+  questionImage.src = "";
+  countdownEl.innerText = "⏱️ Còn lại: —";
+  answerListEl.innerHTML = "";
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+  studentAnswers = {};
+  teamScores = { team1: 0, team2: 0 };
+  team1El.innerHTML = "Đội 1: Điểm 0";
+  team2El.innerHTML = "Đội 2: Điểm 0";
+  alert("Đã reset toàn bộ hệ thống!");
+}
 
-  function showVideoThenImage(videoSrc, imgSrc) {
-    const video = document.createElement("video");
-    video.src = videoSrc;
-    video.controls = true;
-    video.autoplay = true;
-    video.className = "mediaDisplay";
-
-    questionImage.style.display = "none"; // Ẩn hình câu hỏi
-    questionImage.parentNode.insertBefore(video, questionImage);
-
-    video.addEventListener("ended", () => {
-      video.remove();
-      questionImage.style.display = "block";
-      questionImage.src = imgSrc;
-      startCountdown(30);
-    });
-  }
-
-  function resetSystem() {
-    clearInterval(countdownInt);
-    db.ref("currentQuestion").remove();
-    db.ref("answers").remove();
-    db.ref("resetSignal").set(Date.now());
-    questionImage.src = "";
-    countdownEl.innerText = "⏱️ Còn lại: —";
-    answerListEl.innerHTML = "";
-    document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
-    studentAnswers = {};
-    teamScores = { team1: 0, team2: 0 };
-    team1El.innerHTML = "Đội 1: Điểm 0";
-    team2El.innerHTML = "Đội 2: Điểm 0";
-    alert("Đã reset toàn bộ hệ thống!");
-  }
-
-  function startCountdown(sec) {
-    let t = sec;
+function startCountdown(sec) {
+  let t = sec;
+  countdownEl.innerText = `⏱️ ${t}s`;
+  countdownInt = setInterval(() => {
+    t--;
     countdownEl.innerText = `⏱️ ${t}s`;
-    countdownInt = setInterval(() => {
-      t--;
-      countdownEl.innerText = `⏱️ ${t}s`;
-      if (t <= 0) {
-        clearInterval(countdownInt);
-        countdownEl.innerText = "⏱️ 0s";
-        loadAnswers();
-      }
-    }, 1000);
-  }
-
-  function saveAnswerForStudent(studentName, answer) {
-    if (!studentAnswers[studentName]) {
-      studentAnswers[studentName] = {};
+    if (t <= 0) {
+      clearInterval(countdownInt);
+      countdownEl.innerText = "⏱️ 0s";
+      loadAnswers();
     }
-    studentAnswers[studentName]["cau" + currentQuestion] = answer;
-    db.ref("answers/" + studentName).set(studentAnswers[studentName]);
+  }, 1000);
+}
+
+function saveAnswerForStudent(studentName, answer) {
+  if (!studentAnswers[studentName]) {
+    studentAnswers[studentName] = {};
   }
+  studentAnswers[studentName]["cau" + currentQuestion] = answer;
+  db.ref("answers/" + studentName).set(studentAnswers[studentName]);
+}
 
-  function loadAnswers() {
-    if (!currentQuestion) return;
+function loadAnswers() {
+  if (!currentQuestion) return;
 
-    db.ref("answers").once("value", snap => {
-      const data = snap.val();
-      answerListEl.innerHTML = "";
+  db.ref("answers").once("value", snap => {
+    const data = snap.val();
+    answerListEl.innerHTML = "";
 
-      if (data) {
-        for (const name in data) {
-          const answers = data[name];
-          const ansKey = "cau" + currentQuestion;
-          let studentAnswer = answers[ansKey] || "";
+    if (data) {
+      for (const name in data) {
+        const answers = data[name];
+        const ansKey = "cau" + currentQuestion;
+        let studentAnswer = answers[ansKey] || "";
 
-          studentAnswer = studentAnswer.toString().trim().toUpperCase();
-          if (!["A", "B", "C", "D"].includes(studentAnswer)) {
-            studentAnswer = "Không chọn";
-          }
-
-          const correctAnswer = correctAnswers[ansKey];
-          const score = (studentAnswer === correctAnswer) ? 3 : 0;
-
-          if (name.startsWith("Team1")) {
-            teamScores.team1 += score;
-            team1El.innerHTML = `Đội 1: Điểm ${teamScores.team1}`;
-          } else if (name.startsWith("Team2")) {
-            teamScores.team2 += score;
-            team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
-          }
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
-          answerListEl.appendChild(tr);
+        studentAnswer = studentAnswer.toString().trim().toUpperCase();
+        if (!["A", "B", "C", "D"].includes(studentAnswer)) {
+          studentAnswer = "Không chọn";
         }
-      }
-    });
-  }
 
-  function openExplain(number) {
-    const links = {
-      1: 'https://example.com/giai-thich-1',
-      2: 'https://example.com/giai-thich-2',
-      3: 'https://example.com/giai-thich-3',
-      4: 'https://example.com/giai-thich-4'
-    };
-    window.open(links[number], '_blank');
-  }
+        const correctAnswer = correctAnswers[ansKey];
+        const score = (studentAnswer === correctAnswer) ? 3 : 0;
+
+        if (name.startsWith("Team1")) {
+          teamScores.team1 += score;
+          team1El.innerHTML = `Đội 1: Điểm ${teamScores.team1}`;
+        } else if (name.startsWith("Team2")) {
+          teamScores.team2 += score;
+          team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
+        answerListEl.appendChild(tr);
+      }
+    }
+  });
+}
+
+function openExplain(number) {
+  const links = {
+    1: 'https://example.com/giai-thich-1',
+    2: 'https://example.com/giai-thich-2',
+    3: 'https://example.com/giai-thich-3',
+    4: 'https://example.com/giai-thich-4'
+  };
+  window.open(links[number], '_blank');
+}
 </script>
 
 </body>
