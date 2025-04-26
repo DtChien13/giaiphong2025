@@ -50,17 +50,16 @@
   </style>
 </head>
 <body>
- <div id="sidebar">
+
+<div id="sidebar">
   <h3>🛠️ Câu hỏi</h3>
   <div id="questionButtons"></div>
   <button style="background-color: red; margin-top: 20px;" onclick="resetGame()">🔄 Reset</button>
 </div>
 
 <div id="content">
- 
-  <h1 style="color: Red;">BẢN HÙNG CA VANG MÃI</h1>
-    <h2 style="color: green;">PHẦN 1: THỐNG NHẤT NON SÔNG</h2>
-  <h1>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h1>
+  <h2>📋 Điều khiển & Kết quả</h2>
+  <h4>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h4>
   <img id="questionImage" src="" alt="">
   <h3>Kết quả câu <span id="currentQ2">—</span>:</h3>
   <table>
@@ -113,10 +112,7 @@
   function startQuestion(n) {
     curQ = n;
     db.ref("currentQuestion").set({number: n, ts: Date.now()});
-    const padded = String(n).padStart(2, '0');
-  questionImage.src = ./images/C${padded}.png; // Them ảnh
-  
-
+    questionImage.src = `./images/C${padded}.png`;
     currentQEl.innerText = n;
     currentQ2El.innerText = n;
     resultsBody.innerHTML = <tr><td colspan="3">Đang chờ học sinh...</td></tr>;
@@ -173,56 +169,21 @@
     });
   }
 
-function resetGame() {
-  if (confirm("Bạn có chắc muốn reset?")) {
-    // Xóa dữ liệu câu hỏi hiện tại
-    db.ref("currentQuestion").remove();
-    // Xóa tất cả dữ liệu đáp án của học sinh
-    db.ref("answers").remove();
-    // Đặt lại các thông tin hiển thị
-    clearInterval(countdownInt);
-    countdownEl.innerText = "—";
-    currentQEl.innerText = "—";
-    currentQ2El.innerText = "—";
-    questionImage.src = "";
-    resultsBody.innerHTML = <tr><td colspan="3">Chưa có dữ liệu...</td></tr>;
-    // Xóa biểu đồ điểm
-    if (barChart) barChart.destroy();
-    // Gỡ bỏ lựa chọn câu hỏi đã chọn
-    document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
-    // Xóa tên học sinh trong localStorage
-    localStorage.removeItem("name");
+  function resetGame() {
+    if (confirm("Bạn có chắc muốn reset?")) {
+      db.ref("currentQuestion").remove();
+      db.ref("answers").remove();
+      clearInterval(countdownInt);
+      countdownEl.innerText = "—";
+      currentQEl.innerText = "—";
+      currentQ2El.innerText = "—";
+      questionImage.src = "";
+      resultsBody.innerHTML = <tr><td colspan="3">Chưa có dữ liệu...</td></tr>;
+      if (barChart) barChart.destroy();
+      document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
+    }
   }
-}
-
-
 </script>
-<div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-  <div style="background-color: #f0f8ff; padding: 8px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: flex-end; max-width: 160px; width: 100%;">
-    <button onclick="window.open('gioithieu1.html', '_blank');" style="padding: 4px 8px; font-size: 10px; background-color: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 8px; width: 100%;">
-      ℹ️ Giới thiệu 1
-    </button>
-    <button onclick="window.open('gioithieu2.html', '_blank');" style="padding: 4px 8px; font-size: 10px; background-color: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 8px; width: 100%;">
-      ℹ️ Giới thiệu 2
-    </button>
-    <button onclick="window.open('gioithieu3.html', '_blank');" style="padding: 4px 8px; font-size: 10px; background-color: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%;">
-      ℹ️ Giới thiệu 3
-    </button>
-  </div>
-</div>
-
-<style>
-@media (max-width: 600px) {
-  div[style*="display: flex; justify-content: flex-end;"] {
-    justify-content: center;
-  }
-  div[style*="background-color: #f0f8ff;"] {
-    align-items: center;
-    max-width: 80%;
-  }
-}
-</style>
-
 
 </body>
 </html>
