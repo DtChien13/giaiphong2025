@@ -189,8 +189,11 @@ function resetGame() {
     if (barChart) barChart.destroy();
     // Gỡ bỏ lựa chọn câu hỏi đã chọn
     document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
+    // Xóa tên học sinh trong localStorage
+    localStorage.removeItem("name");
   }
 }
+
 
 </script>
 
