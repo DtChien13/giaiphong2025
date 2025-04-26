@@ -6,79 +6,29 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    img {
-      max-width: 90%;
-      height: auto;
-      margin-bottom: 20px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-    }
-    #options button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin: 10px;
-      border: none;
-      border-radius: 8px;
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-    #options button.selected {
-      background-color: #f39c12;
-    }
-    #options button.disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-    #countdown {
-      font-size: 24px;
-      color: red;
-      margin-bottom: 20px;
-    }
-    #loginArea {
-      margin-bottom: 20px;
-    }
-    #loginArea input {
-      padding: 10px;
-      font-size: 18px;
-    }
-    #loginArea button {
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #answeredQuestions {
-      margin-top: 20px;
-      text-align: left;
-      display: inline-block;
-    }
-    #answeredQuestions li {
-      font-size: 18px;
-      margin-bottom: 5px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    img { max-width: 90%; height: auto; margin-bottom: 20px; border: 2px solid #ccc; border-radius: 10px; }
+    #options button { font-size: 20px; padding: 10px 20px; margin: 10px; border: none; border-radius: 8px; background-color: #4CAF50; color: white; cursor: pointer; }
+    #options button.selected { background-color: #f39c12; }
+    #options button.disabled { background-color: #ccc; cursor: not-allowed; }
+    #countdown { font-size: 24px; color: red; margin-bottom: 20px; }
+    #loginArea { margin-bottom: 20px; }
+    #loginArea input { padding: 10px; font-size: 18px; }
+    #loginArea button { padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    #answeredQuestions { margin-top: 20px; text-align: left; display: inline-block; }
+    #answeredQuestions li { font-size: 18px; margin-bottom: 5px; }
   </style>
 </head>
 <body>
 
 <h2>🎯 Hệ thống trả lời câu hỏi</h2>
 
-<!-- Phần nhập tên -->
 <div id="loginArea">
   <h3>Nhập tên nhóm của bạn:</h3>
   <input type="text" id="studentName" placeholder="Nhập tên..." />
   <button onclick="startQuiz()">Bắt đầu</button>
 </div>
 
-<!-- Phần hiển thị câu hỏi và đáp án -->
 <div id="quizArea" style="display:none;">
   <div id="studentDisplay"></div>
   <div id="countdown">⏱️ Còn lại: —</div>
@@ -95,7 +45,6 @@
 </div>
 
 <script>
-  // Cấu hình Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
     authDomain: "giaiphong2025-697c5.firebaseapp.com",
@@ -108,7 +57,6 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Các phần tử giao diện
   const imageEl = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
   const buttons = document.querySelectorAll("#options button");
@@ -118,33 +66,45 @@
   let currentQuestion = null;
   let countdownInt = null;
   let answerAllowed = false;
-  let allAnswers = {};       // Đáp án đã xác nhận
-  let selectedAnswers = {};  // Đáp án tạm thời
+  let allAnswers = {};
+  let selectedAnswers = {};
+  let resetHandled = false;
 
- // Lắng nghe reset từ giáo viên
-db.ref("resetSignal").on("value", snap => {
-  if (snap.exists()) {
-    // Xóa localStorage
-    localStorage.removeItem("name");
-
-    // Reload trang hoặc về màn hình đăng nhập
-    alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
-    location.reload();
-  }
-});
-
-
-    // Nếu có câu hỏi mới
-    const qn = val.number;
-    currentQuestion = qn;
-    const padded = String(qn).padStart(2, '0');
-    imageEl.src = `./images/C${padded}.png`;
-
-    startCountdown(30);
-    resetButtonSelection();
+  db.ref("resetSignal").on("value", snap => {
+    if (snap.exists() && !resetHandled) {
+      resetHandled = true;
+      localStorage.removeItem("name");
+      alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
+      
+    }
   });
 
-  // Hàm đếm ngược
+  function startQuiz() {
+    const nameInput = document.getElementById("studentName").value.trim();
+    if (nameInput.length < 1) {
+      alert("Vui lòng nhập tên!");
+      return;
+    }
+    localStorage.setItem("name", nameInput);
+    studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + nameInput;
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("quizArea").style.display = "block";
+
+    db.ref("currentQuestion").on("value", snap => {
+      if (snap.exists()) {
+        const qn = snap.val().number;
+        if (currentQuestion !== qn) {
+          currentQuestion = qn;
+          const padded = String(qn).padStart(2, '0');
+          imageEl.src = `./images/C${padded}.png`;
+          resetButtonSelection();
+          enableButtons();
+          startCountdown(30);
+        }
+      }
+    });
+  }
+
   function startCountdown(sec) {
     clearInterval(countdownInt);
     let t = sec;
@@ -165,30 +125,21 @@ db.ref("resetSignal").on("value", snap => {
     }, 1000);
   }
 
-  // Lưu đáp án sau khi hết giờ
   function saveAnswerAfterTimeout() {
-    const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
+    const name = localStorage.getItem("name");
     if (!name) {
       alert("Vui lòng nhập tên!");
       return;
     }
-    localStorage.setItem("name", name);
-
     const key = "cau" + currentQuestion;
     const ans = selectedAnswers[key] || "Không chọn";
-
     allAnswers[key] = ans;
-
-    // Hiển thị ra danh sách đã trả lời
     const listItem = document.createElement("li");
     listItem.textContent = `Câu ${currentQuestion}: ${ans}`;
     answeredQuestionsEl.appendChild(listItem);
-
-    // Gửi lên Firebase
     db.ref("answers/" + name).set(allAnswers);
   }
 
-  // Khi chọn đáp án
   buttons.forEach(b => {
     b.onclick = () => {
       if (!answerAllowed || !currentQuestion) return;
@@ -217,28 +168,29 @@ db.ref("resetSignal").on("value", snap => {
     });
   }
 
-  // Khi học sinh nhập tên
-  function startQuiz() {
-    const nameInput = document.getElementById("studentName").value.trim();
-    if (nameInput.length < 1) {
-      alert("Vui lòng nhập tên!");
-      return;
-    }
-    localStorage.setItem("name", nameInput);
-    studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + nameInput;
-    document.getElementById("loginArea").style.display = "none";
-    document.getElementById("quizArea").style.display = "block";
-  }
-
-  // Tự động đăng nhập lại nếu đã có tên
   window.onload = function() {
     const savedName = localStorage.getItem("name");
     if (savedName) {
+      document.getElementById("studentName").value = savedName;
+      studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + savedName;
       document.getElementById("loginArea").style.display = "none";
       document.getElementById("quizArea").style.display = "block";
-      studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + savedName;
+
+      db.ref("currentQuestion").on("value", snap => {
+        if (snap.exists()) {
+          const qn = snap.val().number;
+          if (currentQuestion !== qn) {
+            currentQuestion = qn;
+            const padded = String(qn).padStart(2, '0');
+            imageEl.src = `./images/C${padded}.png`;
+            resetButtonSelection();
+            enableButtons();
+            startCountdown(30);
+          }
+        }
+      });
     }
-  }
+  };
 </script>
 
 </body>
