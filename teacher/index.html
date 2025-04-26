@@ -169,6 +169,15 @@
     document.getElementById("timer").innerText = "Thời gian còn lại: 30s";
     clearInterval(countdown);
     document.getElementById("resultsList").innerHTML = ""; // Xóa bảng kết quả
+
+    // Xóa phương án đã chọn của học sinh
+    const studentsAnswersRef = db.ref("studentAnswers");
+    studentsAnswersRef.once("value").then(snapshot => {
+      snapshot.forEach(childSnapshot => {
+        const studentId = childSnapshot.key;
+        studentsAnswersRef.child(studentId).remove(); // Xóa toàn bộ dữ liệu của học sinh
+      });
+    });
   }
 
   // Chạy bộ đếm thời gian
@@ -203,7 +212,7 @@
             const row = document.createElement("tr");
             row.innerHTML = `
               <td>${studentData.name}</td>
-              <td>${studentData.answer}</td>
+              <td>${studentData.answer}</td> <!-- Hiển thị phương án chọn của học sinh -->
               <td>${studentData.score}</td>
             `;
             resultsList.appendChild(row);
