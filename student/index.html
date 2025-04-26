@@ -56,6 +56,15 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    #answeredQuestions {
+      margin-top: 20px;
+      text-align: left;
+      display: inline-block;
+    }
+    #answeredQuestions li {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -71,6 +80,7 @@
 
 <!-- Phần hiển thị câu hỏi và đáp án -->
 <div id="quizArea" style="display:none;">
+  <div id="studentDisplay"></div>
   <div id="countdown">⏱️ Còn lại: —</div>
   <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
   <div id="options">
@@ -79,6 +89,9 @@
     <button>C</button>
     <button>D</button>
   </div>
+
+  <h3>📋 Các câu đã trả lời:</h3>
+  <ul id="answeredQuestions"></ul>
 </div>
 
 <script>
@@ -99,11 +112,15 @@
   const imageEl = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
   const buttons = document.querySelectorAll("#options button");
+  const studentDisplay = document.getElementById("studentDisplay");
+  const answeredQuestionsEl = document.getElementById("answeredQuestions");
   let currentQuestion = null;
   let countdownInt = null;
   let answerAllowed = false;
+  let allAnswers = {};       // Lưu các câu đã xác nhận (sau khi hết giờ)
+  let selectedAnswers = {};  // Lưu đáp án học sinh chọn tạm thời
 
-  // Khi giáo viên gửi câu hỏi
+  // Khi giáo viên gửi câu hỏi mới
   db.ref("currentQuestion").on("value", snap => {
     const val = snap.val();
     if (!val) {
@@ -115,8 +132,9 @@
     }
     const qn = val.number;
     currentQuestion = qn;
-    imageEl.src = `./c${qn}.png`; // Đường dẫn ảnh theo số câu
-    startCountdown(30); // Bắt đầu đếm ngược
+    imageEl.src = `./c${qn}.png`; // Đường dẫn ảnh
+    startCountdown(30);
+    resetButtonSelection();
   });
 
   // Hàm đếm ngược
@@ -134,6 +152,7 @@
         countdownEl.innerText = "⏱️ 0s";
         answerAllowed = false;
         disableButtons();
+        saveAnswerAfterTimeout();
       }
     }, 1000);
   }
@@ -143,19 +162,42 @@
     b.onclick = () => {
       if (!answerAllowed || !currentQuestion) return;
       const ans = b.innerText;
-      const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
-      if (name) {
-        localStorage.setItem("name", name);
-        db.ref("answers/" + name + "/cau" + currentQuestion).set(ans);
-        buttons.forEach(x => x.classList.remove("selected"));
-        b.classList.add("selected");
-      } else {
-        alert("Vui lòng nhập tên!");
-      }
+      selectedAnswers["cau" + currentQuestion] = ans;
+      buttons.forEach(x => x.classList.remove("selected"));
+      b.classList.add("selected");
     };
   });
 
-  // Hàm vô hiệu hóa các nút
+  // Khi hết giờ -> lưu đáp án đã chọn
+  function saveAnswerAfterTimeout() {
+    const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
+    if (!name) {
+      alert("Vui lòng nhập tên!");
+      return;
+    }
+    localStorage.setItem("name", name);
+
+    const key = "cau" + currentQuestion;
+    const ans = selectedAnswers[key] || "Không chọn";
+
+    // Lưu vào object tổng
+    allAnswers[key] = ans;
+
+    // Hiển thị danh sách
+    const listItem = document.createElement("li");
+    listItem.textContent = `Câu ${currentQuestion}: ${ans}`;
+    answeredQuestionsEl.appendChild(listItem);
+
+    // Gửi Firebase
+    db.ref("answers/" + name).set(allAnswers);
+  }
+
+  // Hàm reset chọn đáp án
+  function resetButtonSelection() {
+    buttons.forEach(b => b.classList.remove("selected"));
+  }
+
+  // Disable nút
   function disableButtons() {
     buttons.forEach(b => {
       b.classList.add("disabled");
@@ -163,7 +205,7 @@
     });
   }
 
-  // Hàm kích hoạt các nút
+  // Enable nút
   function enableButtons() {
     buttons.forEach(b => {
       b.classList.remove("disabled");
@@ -171,7 +213,7 @@
     });
   }
 
-  // Hàm bắt đầu câu hỏi khi học sinh nhập tên
+  // Khi học sinh nhập tên bắt đầu
   function startQuiz() {
     const nameInput = document.getElementById("studentName").value.trim();
     if (nameInput.length < 1) {
@@ -179,8 +221,19 @@
       return;
     }
     localStorage.setItem("name", nameInput);
+    studentDisplay.innerText = "👨‍🎓 Học sinh: " + nameInput;
     document.getElementById("loginArea").style.display = "none";
     document.getElementById("quizArea").style.display = "block";
+  }
+
+  // Tự động đăng nhập nếu đã lưu tên
+  window.onload = function() {
+    const savedName = localStorage.getItem("name");
+    if (savedName) {
+      document.getElementById("loginArea").style.display = "none";
+      document.getElementById("quizArea").style.display = "block";
+      studentDisplay.innerText = "👨‍🎓 Học sinh: " + savedName;
+    }
   }
 </script>
 
