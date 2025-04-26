@@ -41,11 +41,8 @@
       padding: 8px;
     }
     img {
-      max-width: 100%;
-      width: auto;
-      height: auto;
-      margin: 0 auto;
-      display: block;
+      max-width: 80%;
+      margin: 20px 0;
       border: 2px solid #aaa;
       border-radius: 8px;
     }
@@ -53,10 +50,8 @@
   </style>
 </head>
 <body>
-
-<!-- Banner -->
 <div style="text-align: center; margin-bottom: 20px;">
-  <img src="images/banner.png" alt="Banner" style="max-width: 60%; width: auto; height: auto; margin: 0 auto; display: block;">
+  <img src="images/banner.png" alt="Banner" style="max-width: 100%; height: auto;">
 </div>
 
 <div id="sidebar">
@@ -66,7 +61,8 @@
 </div>
 
 <div id="content">
- 
+  <h1 style="color: Red;">BẢN HÙNG CA VANG MÃI</h1>
+    <h2 style="color: green;">PHẦN 1: THỐNG NHẤT NON SÔNG</h2>
   <h1>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h1>
   <img id="questionImage" src="" alt="">
   <h3>Kết quả câu <span id="currentQ2">—</span>:</h3>
@@ -121,12 +117,12 @@
     curQ = n;
     db.ref("currentQuestion").set({number: n, ts: Date.now()});
     const padded = String(n).padStart(2, '0');
-  questionImage.src = `./images/C${padded}.png`; // Them ảnh
+  questionImage.src = ./images/C${padded}.png; // Them ảnh
   
 
     currentQEl.innerText = n;
     currentQ2El.innerText = n;
-    resultsBody.innerHTML = `<tr><td colspan="3">Đang chờ học sinh...</td></tr>`;
+    resultsBody.innerHTML = <tr><td colspan="3">Đang chờ học sinh...</td></tr>;
     startCountdown(30);
     document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
     document.getElementById("q" + n).classList.add("selected");
@@ -135,10 +131,10 @@
   function startCountdown(sec) {
     clearInterval(countdownInt);
     let t = sec;
-    countdownEl.innerText = `${t}s`;
+    countdownEl.innerText = ${t}s;
     countdownInt = setInterval(() => {
       t--;
-      countdownEl.innerText = `${t}s`;
+      countdownEl.innerText = ${t}s;
       if (t <= 0) {
         clearInterval(countdownInt);
         countdownEl.innerText = "0s";
@@ -154,9 +150,9 @@
       const rows = names.map(u => {
         const ans = (data[u]["cau"+curQ] || "");
         const sc = (ans === correct[curQ]) ? 3 : 0;
-        return `<tr><td>${u}</td><td>${ans}</td><td>${sc}</td></tr>`;
+        return <tr><td>${u}</td><td>${ans}</td><td>${sc}</td></tr>;
       });
-      resultsBody.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="3">Không có dữ liệu.</td></tr>`;
+      resultsBody.innerHTML = rows.length ? rows.join("") : <tr><td colspan="3">Không có dữ liệu.</td></tr>;
       updateChart(data);
     });
   }
@@ -192,7 +188,7 @@ function resetGame() {
     currentQEl.innerText = "—";
     currentQ2El.innerText = "—";
     questionImage.src = "";
-    resultsBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu...</td></tr>`;
+    resultsBody.innerHTML = <tr><td colspan="3">Chưa có dữ liệu...</td></tr>;
     // Xóa biểu đồ điểm
     if (barChart) barChart.destroy();
     // Gỡ bỏ lựa chọn câu hỏi đã chọn
@@ -233,4 +229,3 @@ function resetGame() {
 
 </body>
 </html>
-
