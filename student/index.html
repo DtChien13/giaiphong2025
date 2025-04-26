@@ -84,7 +84,7 @@
 <body>
 
 <h2>🎯 Hệ thống trả lời câu hỏi</h2>
-
+ <h1>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h1>
 
 <!-- Phần nhập tên -->
 <div id="loginArea">
@@ -98,7 +98,7 @@
   <div id="studentDisplay"></div>
   <div id="countdown-container">
     <span id="currentQ">Câu: —</span>
-    <span id="countdown">Còn lại: —</span>
+    ⏱️ <span id="countdown">Còn lại: —</span>
   </div>
 
   <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
@@ -145,7 +145,7 @@
     if (!val) {
       imageEl.src = "";
       currentQuestion = null;
-     countdownEl.innerText = "⏱️ Còn lại: —";
+   //   countdownEl.innerText = "⏱️ Còn lại: —";
       disableButtons();
       return;
     }
