@@ -140,15 +140,24 @@
     db.ref("answers/" + name).set(allAnswers);
   }
 
-  buttons.forEach(b => {
-    b.onclick = () => {
-      if (!answerAllowed || !currentQuestion) return;
-      const ans = b.innerText;
-      selectedAnswers["cau" + currentQuestion] = ans;
-      resetButtonSelection();
-      b.classList.add("selected");
-    };
-  });
+ buttons.forEach(b => {
+  b.onclick = () => {
+    if (!answerAllowed || !currentQuestion) return;
+    const ans = b.innerText;
+    const key = "cau" + currentQuestion;
+    selectedAnswers[key] = ans;
+    allAnswers[key] = ans; // << thêm dòng này để đồng bộ luôn
+    resetButtonSelection();
+    b.classList.add("selected");
+
+    // Lưu ngay lên Firebase khi chọn
+    const name = localStorage.getItem("name");
+    if (name) {
+      db.ref("answers/" + name).set(allAnswers);
+    }
+  };
+});
+
 
   function resetButtonSelection() {
     buttons.forEach(b => b.classList.remove("selected"));
