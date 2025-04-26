@@ -39,6 +39,7 @@
       flex: 1;
       padding: 20px;
       text-align: center;
+      overflow-y: auto;
     }
     img {
       max-width: 90%;
@@ -49,6 +50,27 @@
     #currentQuestionText {
       font-size: 24px;
       margin-bottom: 10px;
+    }
+    #timer {
+      font-size: 28px;
+      color: red;
+      margin-top: 20px;
+    }
+    #studentResults {
+      margin-top: 30px;
+    }
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
     }
   </style>
 </head>
@@ -73,6 +95,22 @@
 <div id="content">
   <div id="currentQuestionText">Câu hỏi hiện tại: —</div>
   <img id="teacherQuestionImage" src="" alt="Câu hỏi sẽ hiển thị tại đây">
+  <div id="timer">Thời gian còn lại: 30s</div>
+  
+  <div id="studentResults">
+    <h3>Kết quả học sinh:</h3>
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Tên học sinh</th>
+          <th>Đáp án</th>
+          <th>Điểm</th>
+        </tr>
+      </thead>
+      <tbody id="resultsList">
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -89,30 +127,76 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Lắng nghe sự thay đổi của câu hỏi hiện tại từ Firebase (Giáo viên chọn câu hỏi nào)
+  let countdown;
+  let timeLeft = 30;
+
+  // Lắng nghe sự thay đổi của câu hỏi hiện tại
   db.ref("currentQuestion").on("value", snapshot => {
     const data = snapshot.val();
     if (data && data.number) {
       const number = data.number;
-      const padded = String(number).padStart(2, '0');  // Đảm bảo tên tệp là C01, C02, ...
-      // Cập nhật hình ảnh cho giáo viên
+      const padded = String(number).padStart(2, '0');
       document.getElementById("teacherQuestionImage").src = `./images/C${padded}.png`;
       document.getElementById("currentQuestionText").innerText = `Câu hỏi hiện tại: ${number}`;
+      startTimer();
+      displayStudentResults(number);
     }
   });
 
-  // Hàm chọn câu hỏi cho giáo viên
   function selectQuestion(number) {
     db.ref("currentQuestion").set({
       number: number
     });
   }
 
-  // Reset câu hỏi
   function resetQuestion() {
     db.ref("currentQuestion").remove();
     document.getElementById("teacherQuestionImage").src = "";
     document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
+    document.getElementById("timer").innerText = "Thời gian còn lại: 30s";
+    clearInterval(countdown);
+    document.getElementById("resultsList").innerHTML = ""; // Xóa bảng kết quả
+  }
+
+  function startTimer() {
+    timeLeft = 30;
+    document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
+
+    clearInterval(countdown);
+    countdown = setInterval(() => {
+      timeLeft--;
+      document.getElementById("timer").innerText = `Thời gian còn lại: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        document.getElementById("timer").innerText = "Thời gian hết!";
+        // Khi hết giờ, có thể reload lại kết quả mới nhất
+        const currentQ = parseInt(document.getElementById("currentQuestionText").innerText.split(":")[1]);
+        displayStudentResults(currentQ);
+      }
+    }, 1000);
+  }
+
+  function displayStudentResults(questionNumber) {
+    db.ref("studentAnswers").once("value", snapshot => {
+      const results = snapshot.val();
+      const resultsList = document.getElementById("resultsList");
+      resultsList.innerHTML = "";
+
+      if (results) {
+        for (const studentId in results) {
+          const studentData = results[studentId];
+          if (studentData.question === questionNumber) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${studentData.name}</td>
+              <td>${studentData.answer}</td>
+              <td>${studentData.score}</td>
+            `;
+            resultsList.appendChild(row);
+          }
+        }
+      }
+    });
   }
 </script>
 
