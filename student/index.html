@@ -121,20 +121,18 @@
   let allAnswers = {};       // Đáp án đã xác nhận
   let selectedAnswers = {};  // Đáp án tạm thời
 
-  // Lắng nghe khi giáo viên đổi câu hỏi
-  db.ref("currentQuestion").on("value", snap => {
-    const val = snap.val();
+ // Lắng nghe reset từ giáo viên
+db.ref("resetSignal").on("value", snap => {
+  if (snap.exists()) {
+    // Xóa localStorage
+    localStorage.removeItem("name");
 
-    if (!val) {
-      // Reset khi giáo viên reset
-      clearInterval(countdownInt);
-      imageEl.src = "";
-      currentQuestion = null;
-      countdownEl.innerText = "⏱️ Còn lại: —";
-      disableButtons();
-      resetButtonSelection();
-      return;
-    }
+    // Reload trang hoặc về màn hình đăng nhập
+    alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
+    location.reload();
+  }
+});
+
 
     // Nếu có câu hỏi mới
     const qn = val.number;
