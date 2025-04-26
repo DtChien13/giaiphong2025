@@ -2,103 +2,78 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Giáo viên điều khiển</title>
+  <title>Trang giáo viên</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
-      display: flex;
-    }
-    #questionList {
-      width: 150px;
-      margin-right: 20px;
-    }
-    #questionList button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #mainArea {
-      flex-grow: 1;
+      text-align: center;
     }
     img {
-      max-width: 400px;
+      max-width: 50%;
       height: auto;
       margin-bottom: 20px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
     }
-    #controlPanel {
+    #questionList {
+      display: flex;
+      justify-content: flex-start;
       margin-bottom: 20px;
     }
-    #controlPanel button {
-      padding: 10px 20px;
+    #questionList button {
       font-size: 18px;
-      margin-right: 10px;
-      background-color: #e67e22;
-      color: white;
+      padding: 10px;
+      margin: 10px;
       border: none;
       border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
       cursor: pointer;
     }
-    #countdown {
-      font-size: 24px;
-      color: red;
-      margin: 10px 0;
+    #questionList button.active {
+      background-color: #f39c12;
     }
-    #resultArea {
+    #controlPanel {
       margin-top: 20px;
     }
-    #resultArea h3 {
-      margin-bottom: 10px;
-    }
-    #resultArea ul {
-      list-style: none;
-      padding: 0;
-    }
-    #resultArea li {
-      background: #f1f1f1;
-      padding: 8px;
-      margin-bottom: 5px;
-      border-radius: 5px;
+    #controlPanel button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<!-- Cột câu hỏi -->
-<div id="questionList">
-  <h3>Câu hỏi</h3>
-  <!-- Các nút câu hỏi -->
+<h2>🎯 Trang điều khiển cho giáo viên</h2>
+
+<!-- Phần điều khiển -->
+<div id="controlPanel">
+  <h3>Điều khiển & Kết quả</h3>
+  <button onclick="startQuestion()">Bắt đầu câu hỏi</button>
+  <button onclick="showResults()">Hiển thị kết quả</button>
 </div>
 
-<!-- Khu vực điều khiển và nội dung -->
-<div id="mainArea">
-  <div id="controlPanel">
-    <button onclick="resetQuestion()">🔄 Reset</button>
-  </div>
+<!-- Phần danh sách câu hỏi -->
+<div id="questionList">
+  <!-- Các câu hỏi sẽ hiển thị ở đây -->
+</div>
 
-  <div id="currentQuestionInfo">
-    <div id="countdown">⏱️ Còn lại: —</div>
-    <img id="questionImage" src="" alt="Hình câu hỏi">
-  </div>
-
-  <div id="resultArea">
-    <h3>📋 Kết quả trả lời:</h3>
-    <ul id="answerList"></ul>
-  </div>
+<!-- Phần hiển thị câu hỏi -->
+<div id="questionArea">
+  <h3>Câu hỏi hiện tại</h3>
+  <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
+  <p id="countdown">⏱️ Còn lại: —</p>
 </div>
 
 <script>
-  // Firebase Config
+  // Cấu hình Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
     authDomain: "giaiphong2025-697c5.firebaseapp.com",
@@ -111,85 +86,62 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
+  // Các phần tử giao diện
   const questionListEl = document.getElementById("questionList");
-  const questionImage = document.getElementById("questionImage");
+  const questionImageEl = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
-  const answerListEl = document.getElementById("answerList");
+  const controlPanelEl = document.getElementById("controlPanel");
 
-  let countdownInt = null;
   let currentQuestion = null;
+  let countdownInt = null;
 
-  // Tạo nút câu hỏi
-  for (let i = 1; i <= 10; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = "Câu " + i;
-    btn.onclick = () => {
-      startQuestion(i);
-    };
-    questionListEl.appendChild(btn);
-  }
+  // Hiển thị danh sách các câu hỏi
+  db.ref("questions").on("value", snap => {
+    const questions = snap.val();
+    questionListEl.innerHTML = "";
+    Object.keys(questions).forEach(qn => {
+      const button = document.createElement("button");
+      button.textContent = `Câu ${qn}`;
+      button.onclick = () => {
+        currentQuestion = qn;
+        const padded = String(qn).padStart(2, '0');
+        questionImageEl.src = `./images/C${padded}.png`;
+        db.ref("currentQuestion").set({ number: qn });
+      };
+      questionListEl.appendChild(button);
+    });
+  });
 
-  function startQuestion(qn) {
-    clearInterval(countdownInt);
-    const padded = String(qn).padStart(2, '0');
-    questionImage.src = `./images/C${padded}.png`;
-    currentQuestion = qn;
-
-    db.ref("currentQuestion").set({ number: qn });
+  // Bắt đầu câu hỏi
+  function startQuestion() {
+    if (!currentQuestion) {
+      alert("Vui lòng chọn câu hỏi!");
+      return;
+    }
     startCountdown(30);
-    answerListEl.innerHTML = ""; // Xoá kết quả cũ
   }
 
- function resetQuestion() {
-  // 1. Xoá câu hỏi đang hiển thị
-  clearInterval(countdownInt);
-  db.ref("currentQuestion").remove();
-  
-  // 2. Xoá tất cả câu trả lời
-  db.ref("answers").remove();
+  // Hiển thị kết quả
+  function showResults() {
+    db.ref("answers").once("value", snap => {
+      const answers = snap.val();
+      console.log(answers); // Hiển thị kết quả trả lời của học sinh
+    });
+  }
 
-  // 3. Xóa localStorage của học sinh
-  // Gửi tín hiệu reset qua Firebase để học sinh tự xoá localStorage
-  db.ref("resetSignal").set(Date.now());
-
-  // 4. Dọn dẹp giao diện giáo viên
-  questionImage.src = "";
-  countdownEl.innerText = "⏱️ Còn lại: —";
-  currentQuestion = null;
-  answerListEl.innerHTML = "";
-}
-
-
+  // Hàm đếm ngược
   function startCountdown(sec) {
+    clearInterval(countdownInt);
     let t = sec;
     countdownEl.innerText = `⏱️ ${t}s`;
-
     countdownInt = setInterval(() => {
       t--;
       countdownEl.innerText = `⏱️ ${t}s`;
       if (t <= 0) {
         clearInterval(countdownInt);
         countdownEl.innerText = "⏱️ 0s";
-        loadAnswers();
       }
     }, 1000);
-  }
-
-  function loadAnswers() {
-    if (!currentQuestion) return;
-    db.ref("answers").once("value", snap => {
-      const data = snap.val();
-      answerListEl.innerHTML = "";
-      if (data) {
-        for (const name in data) {
-          const answers = data[name];
-          const answer = answers["cau" + currentQuestion] || "Không chọn";
-          const li = document.createElement("li");
-          li.textContent = `${name}: ${answer}`;
-          answerListEl.appendChild(li);
-        }
-      }
-    });
   }
 </script>
 
