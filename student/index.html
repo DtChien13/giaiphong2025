@@ -17,6 +17,7 @@
     #loginArea button { padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; }
     #answeredQuestions { margin-top: 20px; text-align: left; display: inline-block; }
     #answeredQuestions li { font-size: 18px; margin-bottom: 5px; }
+    #totalScore { font-size: 22px; margin-top: 20px; color: blue; }
   </style>
 </head>
 <body>
@@ -42,6 +43,8 @@
 
   <h3>📋 Các câu đã trả lời:</h3>
   <ul id="answeredQuestions"></ul>
+
+  <div id="totalScore">🏆 Tổng điểm: 0</div>
 </div>
 
 <script>
@@ -62,6 +65,7 @@
   const buttons = document.querySelectorAll("#options button");
   const studentDisplay = document.getElementById("studentDisplay");
   const answeredQuestionsEl = document.getElementById("answeredQuestions");
+  const totalScoreEl = document.getElementById("totalScore");
 
   let currentQuestion = null;
   let countdownInt = null;
@@ -69,13 +73,14 @@
   let allAnswers = {};
   let selectedAnswers = {};
   let resetHandled = false;
+  let totalScore = 0;
 
   db.ref("resetSignal").on("value", snap => {
     if (snap.exists() && !resetHandled) {
       resetHandled = true;
       localStorage.removeItem("name");
       alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
-      
+      location.reload();
     }
   });
 
@@ -99,8 +104,11 @@
           imageEl.src = `./images/C${padded}.png`;
           resetButtonSelection();
           enableButtons();
-          startCountdown(30);
-
+          if (qn === 1) {
+            startCountdown(90); // Câu 1: 90 giây
+          } else {
+            startCountdown(30); // Các câu khác: 30 giây
+          }
         }
       }
     });
@@ -139,26 +147,31 @@
     listItem.textContent = `Câu ${currentQuestion}: ${ans}`;
     answeredQuestionsEl.appendChild(listItem);
     db.ref("answers/" + name).set(allAnswers);
+
+    // Tính điểm đơn giản: nếu đã chọn (không phải "Không chọn") thì +1 điểm
+    if (ans !== "Không chọn") {
+      totalScore++;
+      totalScoreEl.innerText = `🏆 Tổng điểm: ${totalScore}`;
+    }
   }
 
- buttons.forEach(b => {
-  b.onclick = () => {
-    if (!answerAllowed || !currentQuestion) return;
-    const ans = b.innerText;
-    const key = "cau" + currentQuestion;
-    selectedAnswers[key] = ans;
-    allAnswers[key] = ans; // << thêm dòng này để đồng bộ luôn
-    resetButtonSelection();
-    b.classList.add("selected");
+  buttons.forEach(b => {
+    b.onclick = () => {
+      if (!answerAllowed || !currentQuestion) return;
+      const ans = b.innerText;
+      const key = "cau" + currentQuestion;
+      selectedAnswers[key] = ans;
+      allAnswers[key] = ans;
+      resetButtonSelection();
+      b.classList.add("selected");
 
-    // Lưu ngay lên Firebase khi chọn
-    const name = localStorage.getItem("name");
-    if (name) {
-      db.ref("answers/" + name).set(allAnswers);
-    }
-  };
-});
-
+      // Lưu ngay lên Firebase khi chọn
+      const name = localStorage.getItem("name");
+      if (name) {
+        db.ref("answers/" + name).set(allAnswers);
+      }
+    };
+  });
 
   function resetButtonSelection() {
     buttons.forEach(b => b.classList.remove("selected"));
@@ -195,7 +208,11 @@
             imageEl.src = `./images/C${padded}.png`;
             resetButtonSelection();
             enableButtons();
-            startCountdown(30);
+            if (qn === 1) {
+              startCountdown(90);
+            } else {
+              startCountdown(30);
+            }
           }
         }
       });
