@@ -242,12 +242,28 @@ function startQuestion(qn, btn) {
   btn.classList.add("selected");
 
   if (qn === 10) {
-    showVideoThenImage('./videos/C10.mp4', imgPath);
+    showVideoThenImage('./videos/c10.mp4', imgPath); // câu 10: phải xem hết video rồi mới hiện ảnh
+  } else if (qn === 1 || qn === 3) {
+    showVideoAndImageTogether(`./videos/c${qn}.mp4`, imgPath); // câu 1 và 3: hiện video + ảnh cùng lúc
   } else {
     questionImage.style.display = "block";
     questionImage.src = imgPath;
     startCountdown(30);
   }
+}
+
+function showVideoAndImageTogether(videoSrc, imgSrc) {
+  const video = document.createElement("video");
+  video.src = videoSrc;
+  video.controls = true;
+  video.autoplay = true;
+  video.className = "mediaDisplay";
+
+  questionImage.style.display = "block";
+  questionImage.src = imgSrc;
+
+  questionImage.parentNode.insertBefore(video, questionImage);
+  startCountdown(30);
 }
 
 function showVideoThenImage(videoSrc, imgSrc) {
@@ -257,7 +273,7 @@ function showVideoThenImage(videoSrc, imgSrc) {
   video.autoplay = true;
   video.className = "mediaDisplay";
 
-  questionImage.style.display = "none"; // Ẩn ảnh
+  questionImage.style.display = "none"; // Ẩn ảnh trước
   questionImage.parentNode.insertBefore(video, questionImage);
 
   video.addEventListener("ended", () => {
