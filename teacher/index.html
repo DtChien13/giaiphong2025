@@ -197,18 +197,31 @@ function resetGame() {
 
 </script>
 <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-  <div style="background-color: #f0f8ff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: flex-end;">
-    <button onclick="window.open('gioithieu1.html', '_blank');" style="padding: 10px 20px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
+  <div style="background-color: #f0f8ff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: flex-end; max-width: 200px; width: 100%;">
+    <button onclick="window.open('gioithieu1.html', '_blank');" style="padding: 10px 20px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; width: 100%;">
       ℹ️ Giới thiệu 1
     </button>
-    <button onclick="window.open('gioithieu2.html', '_blank');" style="padding: 10px 20px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">
+    <button onclick="window.open('gioithieu2.html', '_blank');" style="padding: 10px 20px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; width: 100%;">
       ℹ️ Giới thiệu 2
     </button>
-    <button onclick="window.open('gioithieu3.html', '_blank');" style="padding: 10px 20px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer;">
+    <button onclick="window.open('gioithieu3.html', '_blank');" style="padding: 10px 20px; font-size: 18px; background-color: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%;">
       ℹ️ Giới thiệu 3
     </button>
   </div>
 </div>
+
+<style>
+@media (max-width: 600px) {
+  div[style*="display: flex; justify-content: flex-end;"] {
+    justify-content: center;
+  }
+  div[style*="background-color: #f0f8ff;"] {
+    align-items: center;
+    max-width: 90%;
+  }
+}
+</style>
+
 
 
 </body>
