@@ -41,8 +41,11 @@
       padding: 8px;
     }
     img {
-      max-width: 80%;
-      margin: 20px 0;
+      max-width: 100%;
+      width: auto;
+      height: auto;
+      margin: 0 auto;
+      display: block;
       border: 2px solid #aaa;
       border-radius: 8px;
     }
@@ -50,8 +53,10 @@
   </style>
 </head>
 <body>
+
+<!-- Banner -->
 <div style="text-align: center; margin-bottom: 20px;">
-  <img src="images/banner.png" alt="Banner" style="max-width: 100%; height: auto;">
+  <img src="images/banner.png" alt="Banner" style="max-width: 100%; width: auto; height: auto; margin: 0 auto; display: block;">
 </div>
 
 <div id="sidebar">
@@ -62,7 +67,7 @@
 
 <div id="content">
   <h1 style="color: Red;">BẢN HÙNG CA VANG MÃI</h1>
-    <h2 style="color: green;">PHẦN 1: THỐNG NHẤT NON SÔNG</h2>
+  <h2 style="color: green;">PHẦN 1: THỐNG NHẤT NON SÔNG</h2>
   <h1>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h1>
   <img id="questionImage" src="" alt="">
   <h3>Kết quả câu <span id="currentQ2">—</span>:</h3>
