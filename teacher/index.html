@@ -140,14 +140,25 @@
     answerListEl.innerHTML = ""; // Xoá kết quả cũ
   }
 
-  function resetQuestion() {
-    clearInterval(countdownInt);
-    db.ref("currentQuestion").remove();
-    questionImage.src = "";
-    countdownEl.innerText = "⏱️ Còn lại: —";
-    currentQuestion = null;
-    answerListEl.innerHTML = "";
-  }
+ function resetQuestion() {
+  // 1. Xoá câu hỏi đang hiển thị
+  clearInterval(countdownInt);
+  db.ref("currentQuestion").remove();
+  
+  // 2. Xoá tất cả câu trả lời
+  db.ref("answers").remove();
+
+  // 3. Xóa localStorage của học sinh
+  // Gửi tín hiệu reset qua Firebase để học sinh tự xoá localStorage
+  db.ref("resetSignal").set(Date.now());
+
+  // 4. Dọn dẹp giao diện giáo viên
+  questionImage.src = "";
+  countdownEl.innerText = "⏱️ Còn lại: —";
+  currentQuestion = null;
+  answerListEl.innerHTML = "";
+}
+
 
   function startCountdown(sec) {
     let t = sec;
