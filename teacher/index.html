@@ -244,7 +244,7 @@ function startQuestion(qn, btn) {
   if (qn === 10) {
     showVideoThenImage('./videos/C10.mp4', imgPath); // câu 10: phải xem hết video rồi mới hiện ảnh
   } else if (qn === 1 || qn === 3) {
-    showVideoAndImageTogether(`./videos/C${qn}.mp4`, imgPath); // câu 1 và 3: hiện video + ảnh cùng lúc
+    showVideoAndImageTogether(`./videos/C0${qn}.mp4`, imgPath); // câu 1 và 3: hiện video + ảnh cùng lúc
   } else {
     questionImage.style.display = "block";
     questionImage.src = imgPath;
