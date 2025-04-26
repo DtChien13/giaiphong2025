@@ -36,7 +36,7 @@
       background-color: #45a049;
     }
     #sidebar button.selected {
-      background-color: #f39c12; /* Màu khác cho nút được chọn */
+      background-color: #f39c12;
     }
     #content {
       flex: 1;
@@ -153,6 +153,53 @@
       // Đổi màu nút câu hỏi đã chọn
       const buttons = document.querySelectorAll("#sidebar button");
       buttons.forEach(button => {
-        button.classList.remove("selected"); // Xóa lớp "selected" của tất cả nút
+        button.classList.remove("selected");
       });
-      document.getElementById(`question${number}`).classList.add("selected"); // Thê
+      document.getElementById(`question${number}`).classList.add("selected");
+    }
+  });
+
+  // Hàm hiển thị kết quả học sinh
+  function displayStudentResults(questionNumber) {
+    db.ref("answers").once("value", snapshot => {
+      const results = snapshot.val();
+      const resultList = document.getElementById("resultsList");
+      resultList.innerHTML = ""; // Xóa các kết quả cũ
+
+      for (const studentName in results) {
+        const answers = results[studentName];
+        const answer = answers[`cau${questionNumber}`] || "Không chọn";
+        const score = (answer !== "Không chọn") ? "1 điểm" : "0 điểm";
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${studentName}</td>
+          <td>${answer}</td>
+          <td>${score}</td>
+        `;
+        resultList.appendChild(row);
+      }
+    });
+  }
+
+  // Hàm reset toàn bộ dữ liệu
+  function resetAllData() {
+    // Reset Firebase
+    db.ref("answers").remove();
+
+    // Reset học sinh
+    db.ref("currentQuestion").set({ number: null });
+    document.getElementById("teacherQuestionImage").src = "";
+    document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
+
+    // Reset bảng kết quả
+    const resultList = document.getElementById("resultsList");
+    resultList.innerHTML = ""; // Xóa kết quả
+
+    // Thông báo cho học sinh
+    alert("Tất cả dữ liệu đã được reset.");
+  }
+</script>
+
+</body>
+</html>
