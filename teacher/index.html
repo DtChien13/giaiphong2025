@@ -39,6 +39,9 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
+    #questionList button.active {
+      background-color: #e67e22;
+    }
     #questionList button:hover {
       background-color: #2980b9;
     }
@@ -93,28 +96,29 @@
       color: #2c3e50;
     }
     #answerList {
-      list-style: none;
-      padding: 0;
-      max-height: 250px;
-      overflow-y: auto;
+      width: 100%;
+      border-collapse: collapse;
     }
-    #answerList li {
-      background: #f1f1f1;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-radius: 5px;
-      font-size: 16px;
+    #answerList th, #answerList td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    #answerList th {
+      background-color: #3498db;
+      color: white;
+    }
+    #answerList td {
+      background-color: #f9f9f9;
     }
   </style>
 </head>
 <body>
 
-<!-- Cột chọn câu hỏi -->
 <div id="questionList">
   <h3>📚 Câu hỏi</h3>
 </div>
 
-<!-- Khu vực chính -->
 <div id="mainArea">
   <div id="controlPanel">
     <button onclick="resetQuestion()">🔄 Reset</button>
@@ -127,12 +131,21 @@
 
   <div id="resultArea">
     <h3>📋 Kết quả trả lời:</h3>
-    <ul id="answerList"></ul>
+    <table id="answerList">
+      <thead>
+        <tr>
+          <th>👤 Tên</th>
+          <th>🅰️ Phương án</th>
+          <th>🏆 Điểm</th>
+        </tr>
+      </thead>
+      <tbody id="answerBody">
+      </tbody>
+    </table>
   </div>
 </div>
 
 <script>
-  // Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
     authDomain: "giaiphong2025-697c5.firebaseapp.com",
@@ -148,10 +161,16 @@
   const questionListEl = document.getElementById("questionList");
   const questionImage = document.getElementById("questionImage");
   const countdownEl = document.getElementById("countdown");
-  const answerListEl = document.getElementById("answerList");
+  const answerBodyEl = document.getElementById("answerBody");
 
   let countdownInt = null;
   let currentQuestion = null;
+  let answerKey = {
+    1: "A", 2: "B", 3: "C", 4: "D", 5: "A",
+    6: "B", 7: "C", 8: "D", 9: "A", 10: "B"
+  };
+
+  let buttons = [];
 
   // Tạo nút chọn câu hỏi
   for (let i = 1; i <= 10; i++) {
@@ -159,6 +178,7 @@
     btn.textContent = "Câu " + i;
     btn.onclick = () => startQuestion(i);
     questionListEl.appendChild(btn);
+    buttons.push(btn);
   }
 
   function startQuestion(qn) {
@@ -169,18 +189,22 @@
 
     db.ref("currentQuestion").set({ number: qn });
     startCountdown(30);
-    answerListEl.innerHTML = ""; // Xóa kết quả cũ
+    answerBodyEl.innerHTML = ""; // Xóa kết quả cũ
+
+    buttons.forEach(b => b.classList.remove("active"));
+    buttons[qn-1].classList.add("active");
   }
 
   function resetQuestion() {
     clearInterval(countdownInt);
     db.ref("currentQuestion").remove();
     db.ref("answers").remove();
-    db.ref("resetSignal").set(Date.now()); // Thêm tín hiệu reset học sinh
+    db.ref("resetSignal").set(Date.now());
     questionImage.src = "";
     countdownEl.innerText = "⏱️ Còn lại: —";
     currentQuestion = null;
-    answerListEl.innerHTML = "";
+    answerBodyEl.innerHTML = "";
+    buttons.forEach(b => b.classList.remove("active"));
   }
 
   function startCountdown(sec) {
@@ -202,14 +226,20 @@
     if (!currentQuestion) return;
     db.ref("answers").once("value", snap => {
       const data = snap.val();
-      answerListEl.innerHTML = "";
+      answerBodyEl.innerHTML = "";
       if (data) {
         for (const name in data) {
           const answers = data[name];
-          const answer = answers["cau" + currentQuestion] || "Không chọn";
-          const li = document.createElement("li");
-          li.textContent = `${name}: ${answer}`;
-          answerListEl.appendChild(li);
+          const selected = answers["cau" + currentQuestion] || "Không chọn";
+          const correct = answerKey[currentQuestion];
+          const score = selected === correct ? 1 : 0;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${name}</td>
+            <td>${selected}</td>
+            <td>${score}</td>
+          `;
+          answerBodyEl.appendChild(row);
         }
       }
     });
