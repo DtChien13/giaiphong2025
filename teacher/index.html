@@ -112,7 +112,8 @@
   function startQuestion(n) {
     curQ = n;
     db.ref("currentQuestion").set({number: n, ts: Date.now()});
-    questionImage.src = `./c${n}.png`;
+    const padded = String(n).padStart(2, '0');
+  questionImage.src = `./images/c${padded}.png`; // Them ảnh
     currentQEl.innerText = n;
     currentQ2El.innerText = n;
     resultsBody.innerHTML = `<tr><td colspan="3">Đang chờ học sinh...</td></tr>`;
