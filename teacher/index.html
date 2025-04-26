@@ -9,14 +9,17 @@
   <style>
     body { 
       font-family: Arial; 
-      text-align: left; /* Canh trái toàn bộ trang */
+      display: flex; 
+      justify-content: center; /* Căn giữa toàn bộ trang */
+      align-items: flex-start;
       padding-top: 30px;
-      display: flex;
+      gap: 40px; /* Khoảng cách giữa các phần tử */
     }
     #questionButtons {
       display: flex;
       flex-direction: column;
-      margin-right: 50px; /* Để cách với các phần còn lại của trang */
+      gap: 15px; /* Khoảng cách giữa các nút câu hỏi */
+      width: 150px; /* Chiều rộng cố định cho cột câu hỏi */
     }
     button {
       font-size: 18px; 
@@ -33,8 +36,7 @@
     }
     table { 
       border-collapse: collapse; 
-      margin: 20px auto; 
-      width: 80%; 
+      width: 100%; /* Chiếm toàn bộ chiều rộng của phần bên phải */
     }
     th, td { 
       border: 1px solid #ccc; 
@@ -45,7 +47,7 @@
       background-color: #f2f2f2; 
     }
     canvas { 
-      width: 300px !important; 
+      width: 100% !important; 
       height: 200px !important; 
       margin-top: 20px; 
     }
@@ -54,15 +56,22 @@
       color: red; 
       margin-top: 10px; 
     }
+    .content {
+      flex: 1; /* Phần còn lại chiếm toàn bộ không gian */
+    }
+    h2 {
+      text-align: center; /* Căn giữa tiêu đề */
+    }
   </style>
 </head>
 <body>
 
 <h2>📋Điều khiển & Kết quả</h2>
 
-<div style="display: flex;">
+<div style="display: flex; gap: 40px;">
   <div id="questionButtons"></div>
-  <div>
+
+  <div class="content">
     <p>Chọn câu để bắt đầu:</p>
     <h3>⏱️ Còn lại: <span id="countdown">—</span></h3>
 
