@@ -2,96 +2,124 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Học sinh trả lời</title>
+  <title>Giáo viên điều khiển</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 200px;
+      background-color: #f7f7f7;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+    #sidebar button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 8px;
+      transition: 0.3s;
+    }
+    #sidebar button:hover {
+      background-color: #45a049;
+    }
+    #sidebar button.selected {
+      background-color: #f39c12;
+    }
+    #content {
+      flex: 1;
+      padding: 20px;
       text-align: center;
-      margin: 20px;
+      overflow-y: auto;
     }
     img {
       max-width: 90%;
-      height: auto;
-      margin-bottom: 20px;
+      margin-top: 20px;
       border: 2px solid #ccc;
       border-radius: 10px;
     }
-    #options button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin: 10px;
-      border: none;
-      border-radius: 8px;
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-    #options button.selected {
-      background-color: #f39c12;
-    }
-    #options button.disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-    #countdown {
+    #currentQuestionText {
       font-size: 24px;
+      margin-bottom: 10px;
+    }
+    #timer {
+      font-size: 28px;
       color: red;
-      margin-bottom: 20px;
-    }
-    #loginArea {
-      margin-bottom: 20px;
-    }
-    #loginArea input {
-      padding: 10px;
-      font-size: 18px;
-    }
-    #loginArea button {
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #answeredQuestions {
       margin-top: 20px;
-      text-align: left;
-      display: inline-block;
     }
-    #answeredQuestions li {
-      font-size: 18px;
-      margin-bottom: 5px;
+    #studentResults {
+      margin-top: 30px;
+    }
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .correct {
+      background-color: #c8e6c9;
+    }
+    .incorrect {
+      background-color: #ffccbc;
     }
   </style>
 </head>
 <body>
 
-<h2>🎯 Hệ thống trả lời câu hỏi</h2>
-
-<!-- Phần nhập tên -->
-<div id="loginArea">
-  <h3>Nhập tên nhóm của bạn:</h3>
-  <input type="text" id="studentName" placeholder="Nhập tên..." />
-  <button onclick="startQuiz()">Bắt đầu</button>
+<div id="sidebar">
+  <h3>Chọn câu hỏi</h3>
+  <button id="question1" onclick="selectQuestion(1)">Câu 1</button>
+  <button id="question2" onclick="selectQuestion(2)">Câu 2</button>
+  <button id="question3" onclick="selectQuestion(3)">Câu 3</button>
+  <button id="question4" onclick="selectQuestion(4)">Câu 4</button>
+  <button id="question5" onclick="selectQuestion(5)">Câu 5</button>
+  <button id="question6" onclick="selectQuestion(6)">Câu 6</button>
+  <button id="question7" onclick="selectQuestion(7)">Câu 7</button>
+  <button id="question8" onclick="selectQuestion(8)">Câu 8</button>
+  <button id="question9" onclick="selectQuestion(9)">Câu 9</button>
+  <button id="question10" onclick="selectQuestion(10)">Câu 10</button>
+  <hr>
+  <button style="background-color:#e74c3c;" onclick="resetAllData()">Reset</button>
 </div>
 
-<!-- Phần hiển thị câu hỏi và đáp án -->
-<div id="quizArea" style="display:none;">
-  <div id="studentDisplay"></div>
-  <div id="countdown">⏱️ Còn lại: —</div>
-  <img id="questionImage" src="" alt="Câu hỏi sẽ xuất hiện tại đây">
-  <div id="options">
-    <button>A</button>
-    <button>B</button>
-    <button>C</button>
-    <button>D</button>
+<div id="content">
+  <div id="currentQuestionText">Câu hỏi hiện tại: —</div>
+  <img id="teacherQuestionImage" src="" alt="Câu hỏi sẽ hiển thị tại đây">
+  <div id="timer">Thời gian còn lại: 30s</div>
+  
+  <div id="studentResults">
+    <h3>Kết quả học sinh:</h3>
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Tên học sinh</th>
+          <th>Đáp án</th>
+          <th>Điểm</th>
+        </tr>
+      </thead>
+      <tbody id="resultsList">
+      </tbody>
+    </table>
   </div>
-
-  <h3>📋 Các câu đã trả lời:</h3>
-  <ul id="answeredQuestions"></ul>
 </div>
 
 <script>
@@ -108,133 +136,68 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Các phần tử giao diện
-  const imageEl = document.getElementById("questionImage");
-  const countdownEl = document.getElementById("countdown");
-  const buttons = document.querySelectorAll("#options button");
-  const studentDisplay = document.getElementById("studentDisplay");
-  const answeredQuestionsEl = document.getElementById("answeredQuestions");
-  let currentQuestion = null;
-  let countdownInt = null;
-  let answerAllowed = false;
-  let allAnswers = {};       // Lưu các câu đã xác nhận (sau khi hết giờ)
-  let selectedAnswers = {};  // Lưu đáp án học sinh chọn tạm thời
+  let countdown;
+  let timeLeft = 30;
 
-  // Khi giáo viên gửi câu hỏi mới
-  db.ref("currentQuestion").on("value", snap => {
-    const val = snap.val();
-    if (!val) {
-      imageEl.src = "";
-      currentQuestion = null;
-      countdownEl.innerText = "⏱️ Còn lại: —";
-      disableButtons();
-      return;
+  // Lắng nghe sự thay đổi của câu hỏi hiện tại
+  db.ref("currentQuestion").on("value", snapshot => {
+    const data = snapshot.val();
+    if (data && data.number) {
+      const number = data.number;
+      const padded = String(number).padStart(2, '0');
+      document.getElementById("teacherQuestionImage").src = `./images/C${padded}.png`;
+      document.getElementById("currentQuestionText").innerText = `Câu hỏi hiện tại: ${number}`;
+      startTimer();
+      displayStudentResults(number);
+
+      // Đổi màu nút câu hỏi đã chọn
+      const buttons = document.querySelectorAll("#sidebar button");
+      buttons.forEach(button => {
+        button.classList.remove("selected");
+      });
+      document.getElementById(`question${number}`).classList.add("selected");
     }
-    const qn = val.number;
-    currentQuestion = qn;
-   const padded = String(qn).padStart(2, '0');
-  imageEl.src = `./images/C${padded}.png`; // Đường dẫn ảnh
-    startCountdown(30);
-    resetButtonSelection();
   });
 
-  // Hàm đếm ngược
-  function startCountdown(sec) {
-    clearInterval(countdownInt);
-    let t = sec;
-    countdownEl.innerText = `⏱️ ${t}s`;
-    answerAllowed = true;
-    enableButtons();
-    countdownInt = setInterval(() => {
-      t--;
-      countdownEl.innerText = `⏱️ ${t}s`;
-      if (t <= 0) {
-        clearInterval(countdownInt);
-        countdownEl.innerText = "⏱️ 0s";
-        answerAllowed = false;
-        disableButtons();
-        saveAnswerAfterTimeout();
+  // Hàm hiển thị kết quả học sinh
+  function displayStudentResults(questionNumber) {
+    db.ref("answers").once("value", snapshot => {
+      const results = snapshot.val();
+      const resultList = document.getElementById("resultsList");
+      resultList.innerHTML = ""; // Xóa các kết quả cũ
+
+      for (const studentName in results) {
+        const answers = results[studentName];
+        const answer = answers[`cau${questionNumber}`] || "Không chọn";
+        const score = (answer !== "Không chọn") ? "1 điểm" : "0 điểm";
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${studentName}</td>
+          <td>${answer}</td>
+          <td>${score}</td>
+        `;
+        resultList.appendChild(row);
       }
-    }, 1000);
-  }
-
-  // Khi học sinh bấm chọn đáp án
-  buttons.forEach(b => {
-    b.onclick = () => {
-      if (!answerAllowed || !currentQuestion) return;
-      const ans = b.innerText;
-      selectedAnswers["cau" + currentQuestion] = ans;
-      buttons.forEach(x => x.classList.remove("selected"));
-      b.classList.add("selected");
-    };
-  });
-
-  // Khi hết giờ -> lưu đáp án đã chọn
-  function saveAnswerAfterTimeout() {
-    const name = localStorage.getItem("name") || document.getElementById("studentName").value.trim();
-    if (!name) {
-      alert("Vui lòng nhập tên!");
-      return;
-    }
-    localStorage.setItem("name", name);
-
-    const key = "cau" + currentQuestion;
-    const ans = selectedAnswers[key] || "Không chọn";
-
-    // Lưu vào object tổng
-    allAnswers[key] = ans;
-
-    // Hiển thị danh sách
-    const listItem = document.createElement("li");
-    listItem.textContent = `Câu ${currentQuestion}: ${ans}`;
-    answeredQuestionsEl.appendChild(listItem);
-
-    // Gửi Firebase
-    db.ref("answers/" + name).set(allAnswers);
-  }
-
-  // Hàm reset chọn đáp án
-  function resetButtonSelection() {
-    buttons.forEach(b => b.classList.remove("selected"));
-  }
-
-  // Disable nút
-  function disableButtons() {
-    buttons.forEach(b => {
-      b.classList.add("disabled");
-      b.disabled = true;
     });
   }
 
-  // Enable nút
-  function enableButtons() {
-    buttons.forEach(b => {
-      b.classList.remove("disabled");
-      b.disabled = false;
-    });
-  }
+  // Hàm reset toàn bộ dữ liệu
+  function resetAllData() {
+    // Reset Firebase
+    db.ref("answers").remove();
 
-  // Khi học sinh nhập tên bắt đầu
-  function startQuiz() {
-    const nameInput = document.getElementById("studentName").value.trim();
-    if (nameInput.length < 1) {
-      alert("Vui lòng nhập tên!");
-      return;
-    }
-    localStorage.setItem("name", nameInput);
-    studentDisplay.innerText = "👨‍🎓 Tên nhóm: " + nameInput;
-    document.getElementById("loginArea").style.display = "none";
-    document.getElementById("quizArea").style.display = "block";
-  }
+    // Reset học sinh
+    db.ref("currentQuestion").set({ number: null });
+    document.getElementById("teacherQuestionImage").src = "";
+    document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
 
-  // Tự động đăng nhập nếu đã lưu tên
-  window.onload = function() {
-    const savedName = localStorage.getItem("name");
-    if (savedName) {
-      document.getElementById("loginArea").style.display = "none";
-      document.getElementById("quizArea").style.display = "block";
-      studentDisplay.innerText = "👨‍🎓 Học sinh: " + savedName;
-    }
+    // Reset bảng kết quả
+    const resultList = document.getElementById("resultsList");
+    resultList.innerHTML = ""; // Xóa kết quả
+
+    // Thông báo cho học sinh
+    alert("Tất cả dữ liệu đã được reset.");
   }
 </script>
 
