@@ -1,1 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Điều khiển & Kết quả</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; display: flex; }
+    #sidebar {
+      width: 180px; padding: 10px;
+      border-right: 2px solid #ccc;
+    }
+    #sidebar button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #sidebar button.selected {
+      background-color: #ff9800;
+    }
+    #content {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
+    }
+    table {
+      margin: 10px auto;
+      border-collapse: collapse;
+      width: 90%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    img {
+      max-width: 80%;
+      margin: 20px 0;
+      border: 2px solid #aaa;
+      border-radius: 8px;
+    }
+    canvas { width: 90% !important; height: 300px !important; }
+  </style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h3>🛠️ Câu hỏi</h3>
+  <div id="questionButtons"></div>
+  <button style="background-color: red; margin-top: 20px;" onclick="resetGame()">🔄 Reset</button>
+</div>
+
+<div id="content">
+  <h2>📋 Điều khiển & Kết quả</h2>
+  <h4>⏱️ <span id="countdown">—</span> | Câu hỏi: <span id="currentQ">—</span></h4>
+  <img id="questionImage" src="" alt="">
+  <h3>Kết quả câu <span id="currentQ2">—</span>:</h3>
+  <table>
+    <thead>
+      <tr><th>Học sinh</th><th>Đáp án</th><th>Điểm</th></tr>
+    </thead>
+    <tbody id="resultsBody">
+      <tr><td colspan="3">Chưa có dữ liệu...</td></tr>
+    </tbody>
+  </table>
+  <h3>Biểu đồ điểm</h3>
+  <canvas id="scoreChart"></canvas>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
+    authDomain: "giaiphong2025-697c5.firebaseapp.com",
+    databaseURL: "https://giaiphong2025-697c5-default-rtdb.firebaseio.com",
+    projectId: "giaiphong2025-697c5",
+    storageBucket: "giaiphong2025-697c5.appspot.com",
+    messagingSenderId: "205746810625",
+    appId: "1:205746810625:web:ec05b354a6221f7b3af500"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const correct = {1:'A',2:'B',3:'C',4:'D',5:'A',6:'B',7:'C',8:'D',9:'A',10:'B'};
+
+  const sidebar = document.getElementById("questionButtons");
+  const countdownEl = document.getElementById("countdown");
+  const currentQEl = document.getElementById("currentQ");
+  const currentQ2El = document.getElementById("currentQ2");
+  const resultsBody = document.getElementById("resultsBody");
+  const ctx = document.getElementById("scoreChart").getContext("2d");
+  const questionImage = document.getElementById("questionImage");
+
+  let barChart = null;
+  let countdownInt = null;
+  let curQ = null;
+
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = "▶️ Câu " + i;
+    btn.id = "q" + i;
+    btn.onclick = () => startQuestion(i);
+    sidebar.appendChild(btn);
+  }
+
+  function startQuestion(n) {
+    curQ = n;
+    db.ref("currentQuestion").set({number: n, ts: Date.now()});
+    questionImage.src = `./c${n}.png`;
+    currentQEl.innerText = n;
+    currentQ2El.innerText = n;
+    resultsBody.innerHTML = `<tr><td colspan="3">Đang chờ học sinh...</td></tr>`;
+    startCountdown(30);
+    document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
+    document.getElementById("q" + n).classList.add("selected");
+  }
+
+  function startCountdown(sec) {
+    clearInterval(countdownInt);
+    let t = sec;
+    countdownEl.innerText = `${t}s`;
+    countdownInt = setInterval(() => {
+      t--;
+      countdownEl.innerText = `${t}s`;
+      if (t <= 0) {
+        clearInterval(countdownInt);
+        countdownEl.innerText = "0s";
+        updateResult();
+      }
+    }, 1000);
+  }
+
+  function updateResult() {
+    db.ref("answers").once("value").then(snap => {
+      const data = snap.val() || {};
+      const names = Object.keys(data);
+      const rows = names.map(u => {
+        const ans = (data[u]["cau"+curQ] || "");
+        const sc = (ans === correct[curQ]) ? 3 : 0;
+        return `<tr><td>${u}</td><td>${ans}</td><td>${sc}</td></tr>`;
+      });
+      resultsBody.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="3">Không có dữ liệu.</td></tr>`;
+      updateChart(data);
+    });
+  }
+
+  function updateChart(data) {
+    const names = Object.keys(data);
+    const pts = names.map(u => {
+      let sum = 0;
+      for (const k in data[u]) {
+        const qn = +k.replace("cau", "");
+        if (data[u][k] === correct[qn]) sum += 3;
+      }
+      return sum;
+    });
+    const colors = names.map(_ => '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16));
+    if (barChart) barChart.destroy();
+    barChart = new Chart(ctx, {
+      type: 'bar',
+      data: {labels: names, datasets: [{data: pts, backgroundColor: colors}]},
+      options: {responsive: true, scales: {y: {beginAtZero: true, max: 30}}}
+    });
+  }
+
+  function resetGame() {
+    if (confirm("Bạn có chắc muốn reset?")) {
+      db.ref("currentQuestion").remove();
+      db.ref("answers").remove();
+      clearInterval(countdownInt);
+      countdownEl.innerText = "—";
+      currentQEl.innerText = "—";
+      currentQ2El.innerText = "—";
+      questionImage.src = "";
+      resultsBody.innerHTML = `<tr><td colspan="3">Chưa có dữ liệu...</td></tr>`;
+      if (barChart) barChart.destroy();
+      document.querySelectorAll("#sidebar button").forEach(b => b.classList.remove("selected"));
+    }
+  }
+</script>
+
+</body>
+</html>
 
