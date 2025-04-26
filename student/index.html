@@ -132,7 +132,8 @@
     }
     const qn = val.number;
     currentQuestion = qn;
-    imageEl.src = `./c${qn}.png`; // Đường dẫn ảnh
+   const padded = String(qn).padStart(2, '0');
+  imageEl.src = `./images/c${padded}.png`; // Đường dẫn ảnh
     startCountdown(30);
     resetButtonSelection();
   });
