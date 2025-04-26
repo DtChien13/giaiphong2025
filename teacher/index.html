@@ -92,7 +92,7 @@
   <button id="question9" onclick="selectQuestion(9)">Câu 9</button>
   <button id="question10" onclick="selectQuestion(10)">Câu 10</button>
   <hr>
-  <button style="background-color:#e74c3c;" onclick="resetQuestion()">Reset</button>
+  <button style="background-color:#e74c3c;" onclick="resetAllData()">Reset</button>
 </div>
 
 <div id="content">
@@ -160,9 +160,10 @@
     });
   }
 
-  // Reset câu hỏi
-  function resetQuestion() {
+  // Hàm reset toàn bộ dữ liệu
+  function resetAllData() {
     db.ref("currentQuestion").remove();
+    db.ref("studentAnswers").remove(); // Xóa tất cả dữ liệu kết quả học sinh
     document.getElementById("teacherQuestionImage").src = "";
     document.getElementById("currentQuestionText").innerText = "Câu hỏi hiện tại: —";
     document.getElementById("timer").innerText = "Thời gian còn lại: 30s";
