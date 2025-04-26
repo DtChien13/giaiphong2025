@@ -99,7 +99,11 @@
           imageEl.src = `./images/C${padded}.png`;
           resetButtonSelection();
           enableButtons();
-          startCountdown(30);
+           if (qn === 1) {
+            startCountdown(90); // Câu 1: 90 giây
+          } else {
+            startCountdown(30); // Các câu khác: 30 giây
+          }
         }
       }
     });
