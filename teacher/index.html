@@ -173,6 +173,10 @@
     </table>
   </div>
 
+  <div id="teamScores">
+    <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
+    <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
+  </div>
 
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
@@ -244,8 +248,7 @@ function startQuestion(qn, btn) {
   } else {
     questionImage.style.display = "block";
     questionImage.src = imgPath;
-     startCountdown(qn === 1 ? 90 : 30);
-
+    startCountdown(30);
   }
 }
 
@@ -260,7 +263,7 @@ function showVideoAndImageTogether(videoSrc, imgSrc) {
   questionImage.src = imgSrc;
 
   questionImage.parentNode.insertBefore(video, questionImage);
-    startCountdown(currentQuestion === 1 ? 90 : 30);
+  startCountdown(30);
 }
 
 function showVideoThenImage(videoSrc, imgSrc) {
