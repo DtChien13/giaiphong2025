@@ -189,7 +189,10 @@
     </table>
   </div>
 
- 
+  <div id="teamScores">
+    <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
+    <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
+  </div>
 
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
@@ -344,15 +347,13 @@ function loadAnswers() {
         let studentAnswer = answers[ansKey] || "";
 
         studentAnswer = studentAnswer.toString().trim().toUpperCase();
-      if (studentAnswer !== "A" && studentAnswer !== "B" && studentAnswer !== "C" && studentAnswer !== "D") {
+        if (!["A", "B", "C", "D"].includes(studentAnswer)) {
           studentAnswer = "Không chọn";
-      }  else {
-        studentAnswe = studentAnswe
-      }
-}     
+        }
+
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
-        
+
         if (!studentScores[name]) studentScores[name] = 0;
         studentScores[name] += score;
 
@@ -363,7 +364,7 @@ function loadAnswers() {
           teamScores.team2 += score;
           team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
         }
- 
+
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${studentScores[name]}</td>`;
         answerListEl.appendChild(tr);
@@ -385,5 +386,6 @@ function openExplain(number) {
   window.open(links[number], '_blank');
 }
 </script>
+
 </body>
 </html>
