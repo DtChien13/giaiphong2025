@@ -77,7 +77,11 @@
       localStorage.removeItem("name");  // Xóa tên nhóm đã lưu khi reset
       alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
 
-      // Hiển thị lại phần đăng nhập sau khi reset
+      // Dừng toàn bộ các tác vụ và quay lại màn hình đăng nhập
+      clearInterval(countdownInt);  // Dừng countdown
+      db.ref("currentQuestion").off();  // Dừng lắng nghe câu hỏi
+      resetButtonSelection();  // Reset các nút lựa chọn
+      disableButtons();  // Vô hiệu hóa các nút trả lời
       document.getElementById("loginArea").style.display = "block";
       document.getElementById("quizArea").style.display = "none";
     }
@@ -192,7 +196,7 @@
             const padded = String(qn).padStart(2, '0');
             imageEl.src = `./images/C${padded}.png`;
             resetButtonSelection();
-            enableButtons(); 
+            enableButtons();
             if (qn === 1) {
               startCountdown(90); // Câu 1: 90 giây
             } else {
