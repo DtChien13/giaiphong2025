@@ -6,7 +6,12 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body {
+    body { 
+      background-image: url('images/'); /* Hình nền */
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      font-family: Arial, sans-serif;
       font-family: Arial, sans-serif;
       margin: 20px;
       display: flex;
@@ -139,6 +144,12 @@
       border-radius: 10px;
       margin-bottom: 20px;
     }
+    #totalScore {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: green;
+    }
   </style>
 </head>
 <body>
@@ -148,13 +159,17 @@
 </div>
 
 <div id="mainArea">
-    <img src="images/banner.png" style="width: 90%; height: auto;">
+   <img src="images/banner.png" style="width: 90%; height: auto;">
+
   <div id="controlPanel">
+  
+
     <button onclick="openExplain(1)">📖 Giải thích 1</button>
     <button onclick="openExplain(2)">📖 Giải thích 2</button>
     <button onclick="openExplain(3)">📖 Giải thích 3</button>
     <button onclick="openExplain(4)">📖 Giải thích 4</button>
   </div>
+
   <div id="currentQuestionInfo">
     <div id="countdown">⏱️ Còn lại: —</div>
     <img id="questionImage" src="" alt="Hình câu hỏi">
@@ -203,6 +218,7 @@ const countdownEl = document.getElementById("countdown");
 const answerListEl = document.getElementById("answerList");
 const team1El = document.getElementById("team1");
 const team2El = document.getElementById("team2");
+const totalScoreEl = document.getElementById("totalScore");
 
 let countdownInt = null;
 let currentQuestion = null;
@@ -229,7 +245,6 @@ function startQuestion(qn, btn) {
   const padded = String(qn).padStart(2, '0');
   const imgPath = `./images/C${padded}.png`;
 
-  // Xóa video cũ nếu có
   const oldVideo = document.querySelector("video");
   if (oldVideo) oldVideo.remove();
 
@@ -243,13 +258,13 @@ function startQuestion(qn, btn) {
   btn.classList.add("selected");
 
   if (qn === 10) {
-    showVideoThenImage('./videos/C10.mp4', imgPath); // câu 10: phải xem hết video rồi mới hiện ảnh
+    showVideoThenImage('./videos/C10.mp4', imgPath);
   } else if (qn === 1 || qn === 3) {
-    showVideoAndImageTogether(`./videos/C0${qn}.mp4`, imgPath); // câu 1 và 3: hiện video + ảnh cùng lúc
+    showVideoAndImageTogether(`./videos/C0${qn}.mp4`, imgPath);
   } else {
     questionImage.style.display = "block";
     questionImage.src = imgPath;
-    startCountdown(30);
+    startCountdown(qn === 1 ? 90 : 30);
   }
 }
 
@@ -264,7 +279,7 @@ function showVideoAndImageTogether(videoSrc, imgSrc) {
   questionImage.src = imgSrc;
 
   questionImage.parentNode.insertBefore(video, questionImage);
-  startCountdown(30);
+  startCountdown(currentQuestion === 1 ? 90 : 30);
 }
 
 function showVideoThenImage(videoSrc, imgSrc) {
@@ -274,7 +289,7 @@ function showVideoThenImage(videoSrc, imgSrc) {
   video.autoplay = true;
   video.className = "mediaDisplay";
 
-  questionImage.style.display = "none"; // Ẩn ảnh trước
+  questionImage.style.display = "none";
   questionImage.parentNode.insertBefore(video, questionImage);
 
   video.addEventListener("ended", () => {
@@ -298,6 +313,7 @@ function resetSystem() {
   teamScores = { team1: 0, team2: 0 };
   team1El.innerHTML = "Đội 1: Điểm 0";
   team2El.innerHTML = "Đội 2: Điểm 0";
+  totalScoreEl.innerHTML = "🎯 Tổng điểm: 0";
   alert("Đã reset toàn bộ hệ thống!");
 }
 
@@ -315,14 +331,6 @@ function startCountdown(sec) {
   }, 1000);
 }
 
-function saveAnswerForStudent(studentName, answer) {
-  if (!studentAnswers[studentName]) {
-    studentAnswers[studentName] = {};
-  }
-  studentAnswers[studentName]["cau" + currentQuestion] = answer;
-  db.ref("answers/" + studentName).set(studentAnswers[studentName]);
-}
-
 function loadAnswers() {
   if (!currentQuestion) return;
 
@@ -331,6 +339,8 @@ function loadAnswers() {
     answerListEl.innerHTML = "";
 
     if (data) {
+      const studentScores = {};
+
       for (const name in data) {
         const answers = data[name];
         const ansKey = "cau" + currentQuestion;
@@ -344,6 +354,9 @@ function loadAnswers() {
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
 
+        if (!studentScores[name]) studentScores[name] = 0;
+        studentScores[name] += score;
+
         if (name.startsWith("Team1")) {
           teamScores.team1 += score;
           team1El.innerHTML = `Đội 1: Điểm ${teamScores.team1}`;
@@ -353,9 +366,12 @@ function loadAnswers() {
         }
 
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
+        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${studentScores[name]}</td>`;
         answerListEl.appendChild(tr);
       }
+
+      const total = teamScores.team1 + teamScores.team2;
+      totalScoreEl.innerHTML = `🎯 Tổng điểm: ${total}`;
     }
   });
 }
