@@ -173,7 +173,10 @@
     </table>
   </div>
 
- 
+  <div id="teamScores">
+    <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
+    <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
+  </div>
 
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
@@ -282,29 +285,20 @@ function showVideoThenImage(videoSrc, imgSrc) {
 }
 
 function resetSystem() {
-  clearInterval(countdownInt); // Dừng đồng hồ đếm ngược
-  db.ref("currentQuestion").remove(); // Xóa câu hỏi hiện tại
-  db.ref("answers").remove(); // Xóa tất cả câu trả lời đã lưu trong Firebase
-  db.ref("resetSignal").set(Date.now()); // Gửi tín hiệu reset đến hệ thống
-  questionImage.src = ""; // Xóa hình ảnh câu hỏi
-  countdownEl.innerText = "⏱️ Còn lại: —"; // Reset đồng hồ đếm ngược
-  answerListEl.innerHTML = ""; // Xóa bảng kết quả
-  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active")); // Xóa lựa chọn câu hỏi
-  
-  // Reset lại giao diện học sinh
-  const studentAnswerButtons = document.querySelectorAll('.student-answer'); // Giả sử các nút trả lời có class 'student-answer'
-  studentAnswerButtons.forEach(button => {
-    button.classList.remove('selected'); // Xóa tất cả các nút đã được chọn
-  });
-
-  // Reset dữ liệu câu trả lời học sinh
-  studentAnswers = {}; // Reset lại dữ liệu các câu trả lời của học sinh
-  teamScores = { team1: 0, team2: 0 }; // Reset điểm số của các đội
-  team1El.innerHTML = "Đội 1: Điểm 0"; // Hiển thị lại điểm của đội 1
-  team2El.innerHTML = "Đội 2: Điểm 0"; // Hiển thị lại điểm của đội 2
-  alert("Đã reset toàn bộ hệ thống!"); // Hiển thị thông báo reset
+  clearInterval(countdownInt);
+  db.ref("currentQuestion").remove();
+  db.ref("answers").remove();
+  db.ref("resetSignal").set(Date.now());
+  questionImage.src = "";
+  countdownEl.innerText = "⏱️ Còn lại: —";
+  answerListEl.innerHTML = "";
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+  studentAnswers = {};
+  teamScores = { team1: 0, team2: 0 };
+  team1El.innerHTML = "Đội 1: Điểm 0";
+  team2El.innerHTML = "Đội 2: Điểm 0";
+  alert("Đã reset toàn bộ hệ thống!");
 }
-
 
 function startCountdown(sec) {
   let t = sec;
