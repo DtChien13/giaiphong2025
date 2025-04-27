@@ -70,12 +70,24 @@
   let selectedAnswers = {};
   let resetHandled = false;
 
+  // Lắng nghe tín hiệu reset từ giáo viên
   db.ref("resetSignal").on("value", snap => {
     if (snap.exists() && !resetHandled) {
       resetHandled = true;
       localStorage.removeItem("name");
       alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
       
+      // Hiển thị lại phần nhập tên và ẩn quiz
+      document.getElementById("loginArea").style.display = "block";
+      document.getElementById("quizArea").style.display = "none";
+      
+      // Reset lại giao diện
+      resetButtonSelection();
+      imageEl.src = ""; // Xóa hình ảnh câu hỏi
+      countdownEl.innerText = "⏱️ Còn lại: —"; // Reset đồng hồ đếm ngược
+      allAnswers = {}; // Reset dữ liệu các câu trả lời đã lưu
+      answeredQuestionsEl.innerHTML = ""; // Xóa danh sách các câu trả lời
+      selectedAnswers = {}; // Xóa lựa chọn trả lời hiện tại
     }
   });
 
