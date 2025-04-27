@@ -186,10 +186,7 @@
     </table>
   </div>
 
-  <div id="teamScores">
-    <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
-    <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
-  </div>
+ 
 
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
@@ -341,9 +338,11 @@ function loadAnswers() {
       for (const name in data) {
         const answers = data[name];
         const ansKey = "cau" + currentQuestion;
-        let studentAnswer = answers[ansKey] || "";
 
+        let studentAnswer = answers[ansKey] || "Không chọn";
         studentAnswer = studentAnswer.toString().trim().toUpperCase();
+
+        // Kiểm tra nếu không phải A/B/C/D thì đánh dấu là "Không chọn"
         if (!["A", "B", "C", "D"].includes(studentAnswer)) {
           studentAnswer = "Không chọn";
         }
@@ -351,28 +350,24 @@ function loadAnswers() {
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
 
-        if (!studentScores[name]) studentScores[name] = 0;
-        studentScores[name] += score;
-
+        // Cộng điểm cho nhóm
         if (name.startsWith("Team1")) {
           teamScores.team1 += score;
-          team1El.innerHTML = `Đội 1: Điểm ${teamScores.team1}`;
         } else if (name.startsWith("Team2")) {
           teamScores.team2 += score;
-          team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
         }
 
+        // Tạo bảng kết quả
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${studentScores[name]}</td>`;
+        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
         answerListEl.appendChild(tr);
       }
 
       const total = teamScores.team1 + teamScores.team2;
-      totalScoreEl.innerHTML = `🎯 Tổng điểm: ${total}`;
+      document.getElementById("totalScore").innerText = `🎯 Tổng điểm: ${total}`;
     }
   });
 }
-
 function openExplain(number) {
   const links = {
     1: 'https://example.com/giai-thich-1',
