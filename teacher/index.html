@@ -6,12 +6,153 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    /* Đặt style giống như bạn đã viết */
+    body { 
+      background-image: url('images/'); /* Hình nền */
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      display: flex;
+      gap: 20px;
+    }
+    #questionList {
+      width: 180px;
+    }
+    #questionList button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 8px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    #questionList button.active {
+      background-color: #e74c3c;
+    }
+    #questionList button.selected {
+      background-color: #e74c3c;
+    }
+    #mainArea {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    #controlPanel {
+      margin-bottom: 20px;
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #controlPanel button {
+      padding: 10px 20px;
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #currentQuestionInfo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    #countdown {
+      font-size: 24px;
+      color: red;
+      margin: 10px 0;
+    }
+    #questionImage {
+      width: 600px;
+      max-width: 90%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: block;
+    }
+    #resultArea {
+      width: 100%;
+      padding-bottom: 50px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f7f7f7;
+    }
+    #resetButtonContainer {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      padding: 10px;
+    }
+    #resetButtonContainer button {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #resetButtonContainer button:hover {
+      background-color: #c0392b;
+    }
+    #teamScores {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 0;
+    }
+    .teamBox {
+      width: 3cm;
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .mediaDisplay {
+      width: 600px;
+      max-width: 90%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    #totalScore {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: green;
+    }
   </style>
 </head>
 <body>
 
-<!-- Các phần tử trong giao diện HTML của bạn -->
 <div id="questionList">
   <h3>Câu hỏi</h3>
 </div>
@@ -45,13 +186,17 @@
     </table>
   </div>
 
+  <div id="teamScores">
+    <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
+    <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
+  </div>
+
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
   </div>
 </div>
 
 <script>
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyB-ST5U4VSxraEGKl3INjGKKdl9Dik5bg0",
   authDomain: "giaiphong2025-697c5.firebaseapp.com",
@@ -68,6 +213,9 @@ const questionListEl = document.getElementById("questionList");
 const questionImage = document.getElementById("questionImage");
 const countdownEl = document.getElementById("countdown");
 const answerListEl = document.getElementById("answerList");
+const team1El = document.getElementById("team1");
+const team2El = document.getElementById("team2");
+const totalScoreEl = document.getElementById("totalScore");
 
 let countdownInt = null;
 let currentQuestion = null;
@@ -77,6 +225,7 @@ const correctAnswers = {
   cau6: "D", cau7: "A", cau8: "D", cau9: "A", cau10: "D"
 };
 
+let studentAnswers = {};
 let teamScores = { team1: 0, team2: 0 };
 
 for (let i = 1; i <= 10; i++) {
@@ -93,15 +242,76 @@ function startQuestion(qn, btn) {
   const padded = String(qn).padStart(2, '0');
   const imgPath = `./images/C${padded}.png`;
 
+  const oldVideo = document.querySelector("video");
+  if (oldVideo) oldVideo.remove();
+
   db.ref("currentQuestion").set({ number: qn });
   answerListEl.innerHTML = "";
 
   document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
 
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+
+  if (qn === 10) {
+    showVideoThenImage('./videos/C10.mp4', imgPath);
+  } else if (qn === 1 || qn === 3) {
+    showVideoAndImageTogether(`./videos/C0${qn}.mp4`, imgPath);
+  } else {
+    questionImage.style.display = "block";
+    questionImage.src = imgPath;
+    startCountdown(qn === 1 ? 90 : 30);
+  }
+}
+
+function showVideoAndImageTogether(videoSrc, imgSrc) {
+  const video = document.createElement("video");
+  video.src = videoSrc;
+  video.controls = true;
+  video.autoplay = true;
+  video.className = "mediaDisplay";
+
   questionImage.style.display = "block";
-  questionImage.src = imgPath;
-  startCountdown(qn === 1 ? 90 : 30);
+  questionImage.src = imgSrc;
+
+  questionImage.parentNode.insertBefore(video, questionImage);
+  startCountdown(currentQuestion === 1 ? 90 : 30);
+}
+
+function showVideoThenImage(videoSrc, imgSrc) {
+  const video = document.createElement("video");
+  video.src = videoSrc;
+  video.controls = true;
+  video.autoplay = true;
+  video.className = "mediaDisplay";
+
+  questionImage.style.display = "none";
+  questionImage.parentNode.insertBefore(video, questionImage);
+
+  video.addEventListener("ended", () => {
+    video.remove();
+    questionImage.style.display = "block";
+    questionImage.src = imgSrc;
+    startCountdown(30);
+  });
+}
+
+function resetSystem() {
+  clearInterval(countdownInt);
+  db.ref("currentQuestion").remove();
+  db.ref("answers").remove();
+  db.ref("resetSignal").set(Date.now());
+  questionImage.src = "";
+  countdownEl.innerText = "⏱️ Còn lại: —";
+  answerListEl.innerHTML = "";
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+  studentAnswers = {};
+  teamScores = { team1: 0, team2: 0 };
+  team1El.innerHTML = "Đội 1: Điểm 0";
+  team2El.innerHTML = "Đội 2: Điểm 0";
+  totalScoreEl.innerHTML = "🎯 Tổng điểm: 0";
+  alert("Đã reset toàn bộ hệ thống!");
 }
 
 function startCountdown(sec) {
@@ -131,11 +341,9 @@ function loadAnswers() {
       for (const name in data) {
         const answers = data[name];
         const ansKey = "cau" + currentQuestion;
+        let studentAnswer = answers[ansKey] || "";
 
-        let studentAnswer = answers[ansKey] || "Không chọn";
         studentAnswer = studentAnswer.toString().trim().toUpperCase();
-
-        // Kiểm tra nếu không phải A/B/C/D thì đánh dấu là "Không chọn"
         if (!["A", "B", "C", "D"].includes(studentAnswer)) {
           studentAnswer = "Không chọn";
         }
@@ -143,35 +351,26 @@ function loadAnswers() {
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
 
-        // Cộng điểm cho nhóm
+        if (!studentScores[name]) studentScores[name] = 0;
+        studentScores[name] += score;
+
         if (name.startsWith("Team1")) {
           teamScores.team1 += score;
+          team1El.innerHTML = `Đội 1: Điểm ${teamScores.team1}`;
         } else if (name.startsWith("Team2")) {
           teamScores.team2 += score;
+          team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
         }
 
-        // Tạo bảng kết quả
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
+        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${studentScores[name]}</td>`;
         answerListEl.appendChild(tr);
       }
 
       const total = teamScores.team1 + teamScores.team2;
-      document.getElementById("totalScore").innerText = `🎯 Tổng điểm: ${total}`;
+      totalScoreEl.innerHTML = `🎯 Tổng điểm: ${total}`;
     }
   });
-}
-
-function resetSystem() {
-  clearInterval(countdownInt);
-  db.ref("currentQuestion").remove();
-  db.ref("answers").remove();
-  db.ref("resetSignal").set(Date.now());
-  questionImage.src = "";
-  countdownEl.innerText = "⏱️ Còn lại: —";
-  answerListEl.innerHTML = "";
-  teamScores = { team1: 0, team2: 0 };
-  alert("Đã reset toàn bộ hệ thống!");
 }
 
 function openExplain(number) {
