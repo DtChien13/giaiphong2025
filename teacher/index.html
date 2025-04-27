@@ -344,9 +344,12 @@ function loadAnswers() {
         let studentAnswer = answers[ansKey] || "";
 
         studentAnswer = studentAnswer.toString().trim().toUpperCase();
-       if (studentAnswer !== "A" && studentAnswer !== "B" && studentAnswer !== "C" && studentAnswer !== "D") {
-         studentAnswer = "Không chọn";
-         }
+      if (studentAnswer !== "A" && studentAnswer !== "B" && studentAnswer !== "C" && studentAnswer !== "D") {
+  studentAnswer = "Không chọn";
+} else {
+  console.log("Phương án học sinh chọn:", studentAnswer);
+}
+
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
 
