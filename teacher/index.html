@@ -12,6 +12,7 @@
       background-position: center center;
       background-repeat: no-repeat;
       font-family: Arial, sans-serif;
+      font-family: Arial, sans-serif;
       margin: 20px;
       display: flex;
       gap: 20px;
@@ -161,6 +162,8 @@
    <img src="images/banner.png" style="width: 90%; height: auto;">
 
   <div id="controlPanel">
+  
+
     <button onclick="openExplain(1)">📖 Giải thích 1</button>
     <button onclick="openExplain(2)">📖 Giải thích 2</button>
     <button onclick="openExplain(3)">📖 Giải thích 3</button>
@@ -186,7 +189,10 @@
     </table>
   </div>
 
- 
+  <div id="teamScores">
+    <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
+    <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
+  </div>
 
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
@@ -338,36 +344,38 @@ function loadAnswers() {
       for (const name in data) {
         const answers = data[name];
         const ansKey = "cau" + currentQuestion;
+        let studentAnswer = answers[ansKey] || "";
 
-        let studentAnswer = answers[ansKey] || "Không chọn";
         studentAnswer = studentAnswer.toString().trim().toUpperCase();
-
-        // Kiểm tra nếu không phải A/B/C/D thì đánh dấu là "Không chọn"
-     
- 
+        if (!["A", "B", "C", "D"].includes(studentAnswer)) {
+          studentAnswer = "Không chọn";
         }
 
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
 
-        // Cộng điểm cho nhóm
+        if (!studentScores[name]) studentScores[name] = 0;
+        studentScores[name] += score;
+
         if (name.startsWith("Team1")) {
           teamScores.team1 += score;
+          team1El.innerHTML = `Đội 1: Điểm ${teamScores.team1}`;
         } else if (name.startsWith("Team2")) {
           teamScores.team2 += score;
+          team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
         }
 
-        // Tạo bảng kết quả
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${score}</td>`;
+        tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${studentScores[name]}</td>`;
         answerListEl.appendChild(tr);
       }
 
       const total = teamScores.team1 + teamScores.team2;
-      document.getElementById("totalScore").innerText = `🎯 Tổng điểm: ${total}`;
+      totalScoreEl.innerHTML = `🎯 Tổng điểm: ${total}`;
     }
   });
 }
+
 function openExplain(number) {
   const links = {
     1: 'https://example.com/giai-thich-1',
