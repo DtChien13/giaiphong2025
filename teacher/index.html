@@ -343,8 +343,10 @@ function loadAnswers() {
         studentAnswer = studentAnswer.toString().trim().toUpperCase();
 
         // Kiểm tra nếu không phải A/B/C/D thì đánh dấu là "Không chọn"
-        if (!["A", "B", "C", "D"].includes(studentAnswer)) {
-          studentAnswer = "Không chọn";
+      if (studentAnswer !== "A" && studentAnswer !== "B" && studentAnswer !== "C" && studentAnswer !== "D") {
+      studentAnswer = "Không chọn";
+        }
+
         }
 
         const correctAnswer = correctAnswers[ansKey];
