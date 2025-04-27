@@ -175,9 +175,11 @@
 
   // Hàm reset quiz
   function resetQuiz() {
-    clearInterval(countdownInt);
-    countdownEl.innerText = "⏱️ Còn lại: —";
+    clearInterval(countdownInt);  // Dừng đồng hồ
+    countdownEl.innerText = "⏱️ Còn lại: —";  // Xóa đồng hồ
     selectedAnswers = {};  // Reset câu trả lời đã chọn
+    allAnswers = {};  // Xóa tất cả các câu trả lời
+    answeredQuestionsEl.innerHTML = "";  // Xóa danh sách câu trả lời
     resetButtonSelection(); // Hủy các lựa chọn đã chọn
     enableButtons(); // Bật lại các nút
     imageEl.src = ""; // Xóa hình ảnh câu hỏi
