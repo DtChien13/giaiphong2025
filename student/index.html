@@ -70,12 +70,16 @@
   let selectedAnswers = {};
   let resetHandled = false;
 
+  // Lắng nghe tín hiệu reset từ Firebase
   db.ref("resetSignal").on("value", snap => {
     if (snap.exists() && !resetHandled) {
       resetHandled = true;
-      localStorage.removeItem("name");
+      localStorage.removeItem("name");  // Xóa tên nhóm đã lưu khi reset
       alert("Giáo viên đã reset. Vui lòng nhập tên lại!");
-      
+
+      // Hiển thị lại phần đăng nhập sau khi reset
+      document.getElementById("loginArea").style.display = "block";
+      document.getElementById("quizArea").style.display = "none";
     }
   });
 
@@ -99,7 +103,7 @@
           imageEl.src = `./images/C${padded}.png`;
           resetButtonSelection();
           enableButtons();
-           if (qn == 1) {
+          if (qn == 1) {
             startCountdown(90); // Câu 1: 90 giây
           } else {
             startCountdown(30); // Các câu khác: 30 giây
@@ -189,11 +193,11 @@
             imageEl.src = `./images/C${padded}.png`;
             resetButtonSelection();
             enableButtons();
-             if (qn === 1) {
-            startCountdown(90); // Câu 1: 90 giây
-          } else {
-            startCountdown(30); // Các câu khác: 30 giây
-          }
+            if (qn === 1) {
+              startCountdown(90); // Câu 1: 90 giây
+            } else {
+              startCountdown(30); // Các câu khác: 30 giây
+            }
           }
         }
       });
