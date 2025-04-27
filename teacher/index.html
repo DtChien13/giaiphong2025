@@ -297,21 +297,35 @@ function showVideoThenImage(videoSrc, imgSrc) {
 }
 
 function resetSystem() {
+  // Dừng bộ đếm thời gian nếu có
   clearInterval(countdownInt);
-  db.ref("currentQuestion").remove();
-  db.ref("answers").remove();
-  db.ref("resetSignal").set(Date.now());
-  questionImage.src = "";
-  countdownEl.innerText = "⏱️ Còn lại: —";
-  answerListEl.innerHTML = "";
+
+  // Xóa tất cả dữ liệu trên Firebase
+  db.ref("currentQuestion").remove();  // Xóa câu hỏi hiện tại
+  db.ref("answers").remove();  // Xóa tất cả câu trả lời học sinh
+  db.ref("studentChoices").remove();  // Xóa lựa chọn của học sinh (nếu có trường này)
+  db.ref("teacherChoices").remove();  // Xóa lựa chọn của giáo viên (nếu có trường này)
+  db.ref("resetSignal").set(Date.now());  // Đánh dấu thời điểm reset
+
+  // Dọn dẹp giao diện người dùng
+  questionImage.src = "";  // Xóa hình ảnh câu hỏi
+  countdownEl.innerText = "⏱️ Còn lại: —";  // Reset countdown
+  answerListEl.innerHTML = "";  // Dọn sạch danh sách câu trả lời
+
+  // Reset các câu hỏi đã chọn
   document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#questionList button").forEach(b => b.classList.remove("selected"));
+
+  // Reset các biến lưu trữ điểm số và lựa chọn
   studentAnswers = {};
   teamScores = { team1: 0, team2: 0 };
-  team1El.innerHTML = "Đội 1: Điểm 0";
-  team2El.innerHTML = "Đội 2: Điểm 0";
-  totalScoreEl.innerHTML = "🎯 Tổng điểm: 0";
+
+ 
+
+  // Thông báo đã reset hệ thống
   alert("Đã reset toàn bộ hệ thống!");
 }
+
 
 function startCountdown(sec) {
   let t = sec;
