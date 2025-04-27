@@ -349,13 +349,10 @@ function loadAnswers() {
       }  else {
         studentAnswe = studentAnswe
       }
-}
-     
-
-      
+}     
         const correctAnswer = correctAnswers[ansKey];
         const score = (studentAnswer === correctAnswer) ? 3 : 0;
-
+        
         if (!studentScores[name]) studentScores[name] = 0;
         studentScores[name] += score;
 
@@ -366,7 +363,7 @@ function loadAnswers() {
           teamScores.team2 += score;
           team2El.innerHTML = `Đội 2: Điểm ${teamScores.team2}`;
         }
-        studentAnswe = studentAnswe
+ 
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${name}</td><td>${studentAnswer}</td><td>${studentScores[name]}</td>`;
         answerListEl.appendChild(tr);
