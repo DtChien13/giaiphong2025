@@ -5,13 +5,13 @@
   <title>Giáo viên điều khiển</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Thêm Chart.js -->
   <style>
     body { 
       background-image: url('images/'); /* Hình nền */
       background-size: cover;
       background-position: center center;
       background-repeat: no-repeat;
+      font-family: Arial, sans-serif;
       font-family: Arial, sans-serif;
       margin: 20px;
       display: flex;
@@ -150,10 +150,6 @@
       margin-bottom: 10px;
       color: green;
     }
-    /* Thêm style cho biểu đồ cột */
-    canvas {
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
@@ -166,6 +162,8 @@
    <img src="images/banner.png" style="width: 90%; height: auto;">
 
   <div id="controlPanel">
+  
+
     <button onclick="openExplain(1)">📖 Giải thích 1</button>
     <button onclick="openExplain(2)">📖 Giải thích 2</button>
     <button onclick="openExplain(3)">📖 Giải thích 3</button>
@@ -195,9 +193,6 @@
     <div class="teamBox" id="team1">Đội 1: Điểm 0</div>
     <div class="teamBox" id="team2">Đội 2: Điểm 0</div>
   </div>
-
-  <!-- Thêm biểu đồ cột -->
-  <canvas id="scoreChart" width="400" height="200"></canvas>
 
   <div id="resetButtonContainer">
     <button onclick="resetSystem()">🔄 Reset</button>
@@ -319,10 +314,6 @@ function resetSystem() {
   team1El.innerHTML = "Đội 1: Điểm 0";
   team2El.innerHTML = "Đội 2: Điểm 0";
   totalScoreEl.innerHTML = "🎯 Tổng điểm: 0";
-  
-  // Reset chart
-  if (chartInstance) chartInstance.destroy();
-  
   alert("Đã reset toàn bộ hệ thống!");
 }
 
@@ -381,9 +372,6 @@ function loadAnswers() {
 
       const total = teamScores.team1 + teamScores.team2;
       totalScoreEl.innerHTML = `🎯 Tổng điểm: ${total}`;
-      
-      // Cập nhật biểu đồ sau khi điểm đã thay đổi
-      updateChart();
     }
   });
 }
@@ -396,41 +384,6 @@ function openExplain(number) {
     4: 'https://example.com/giai-thich-4'
   };
   window.open(links[number], '_blank');
-}
-
-// Thêm hàm để update biểu đồ cột
-let chartInstance = null;
-function updateChart() {
-  const ctx = document.getElementById('scoreChart').getContext('2d');
-  const data = {
-    labels: ['Đội 1', 'Đội 2'],
-    datasets: [{
-      label: 'Điểm',
-      data: [teamScores.team1, teamScores.team2],
-      backgroundColor: ['#3498db', '#e74c3c']
-    }]
-  };
-  const config = {
-    type: 'bar',
-    data: data,
-    options: {
-      indexAxis: 'y',
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: { stepSize: 3 }
-        }
-      },
-      plugins: {
-        legend: { display: false }
-      }
-    }
-  };
-
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
-  chartInstance = new Chart(ctx, config);
 }
 </script>
 
